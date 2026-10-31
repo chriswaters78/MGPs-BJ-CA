@@ -32,5 +32,3 @@ output folder, later builds leave them alone.
 
 Rule set (`.rs`), strategy, bonus rule and other files saved by earlier versions, including the samples in
 `BJ CA\Sample MGP BJCA v2 Files.zip`, still load.
-
-The `BJCA Setup` installer project was built for the .NET Framework 3.5 version and has not been updated.
