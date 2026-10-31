@@ -1,4 +1,4 @@
-# Spanish 21 H17 chart for redoubling to 8 units
+# Spanish 21 H17 chart for redoubling to 8 units, chosen by the CA
 
 6 decks, dealer hits soft 17, all bonuses except the super bonus, player 21 always wins, double and redouble up to 8 units.
 
@@ -21,7 +21,7 @@
 | 12 | H | H | H | H | H | H | H | H | H | H |
 | 13 | H | H | H | H | S4* | H | H | H | H | H |
 | 14 | H | H | S4* | S5 | S6 | H | H | H | H | H |
-| 15 | S4* | S5 | S6 | S6 | S/H6/S7 | H | H | H | H | H |
+| 15 | S4* | S5 | S6 | S6 | S6 | H | H | H | H | H |
 | 16 | S6 | S6 | S6 | S | S | H | H | H | H | RH |
 | 17 | S | S | S | S | S | S | S6 | S6 | S6 | RH |
 | 18 | S | S | S | S | S | S | S | S | S | S |
@@ -55,5 +55,28 @@
 | A,A | P | P | P | P | P | P | P | P | P | P |
 
 H hit, S stand, D double, P split, RH surrender if allowed otherwise hit, RS surrender if allowed otherwise stand.
-A number after a play is a card count: D4 = double, but hit with 4 or more cards; S6 = stand, but hit with 6 or more cards;
-S/H6/S7 = stand, but hit with exactly 6 cards and stand again with 7 or more. * = hit the two-card hand that can still make 6-7-8.
+A number after a play is a card count: D4 = double, but hit with 4 or more cards; S6 = stand, but hit with 6 or more cards.
+\* = hit the two-card hand that can still make 6-7-8 (6,7 v 6; 6,8 v 4; 7,8 v 2). Never split 4s, 5s or 10s.
+
+## After doubling
+
+The Wizard's "Player Has Already Doubled" chart: S stand, D double again (up to 8 units), R rescue.
+
+| Hard | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | T | A |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 6 | S | D | D | D | D | D | R | R | R | R |
+| 7 | D | D | D | D | D | D | R | R | R | R |
+| 8 | D | D | D | D | D | D | D | D | R | R |
+| 9-11 | D | D | D | D | D | D | D | D | D | D |
+| 12 | S | S | S | S | S | D | D | R | R | R |
+| 13-16 | S | S | S | S | S | S | R | R | R | R |
+| 17 | S | S | S | S | S | S | S | S | S | R |
+| 18-21 | S | S | S | S | S | S | S | S | S | S |
+
+| Soft | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | T | A |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 13-17 | D | D | D | D | D | D | D | D | D | D |
+| 18 | S | S | D | D | D | S | S | S | S | S |
+| 19-21 | S | S | S | S | S | S | S | S | S | S |
+
+A forced strategy can't set the play after a double: the CA always picks stand, redouble or rescue as the best play for the exact cards, which is what the EVs above assume. Playing doubled hands by this chart instead costs about 0.0001%. A rescue loses half the current stake: the original bet after one double, the bet before the redouble after a redouble.
