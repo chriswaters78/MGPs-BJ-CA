@@ -624,7 +624,7 @@ namespace BJ_CA
 
                 Rules.SPL = 1;
                 tempCA2.Calculate(Rules, ref DealerProbsRT);
-                SPL1Estimate = OriginalEV - tempCA.Opt.GameEVs.NetGameEV;
+                SPL1Estimate = OriginalEV - tempCA2.Opt.GameEVs.NetGameEV;
                 Rules.SPL = OriginalSPL;
             }
 

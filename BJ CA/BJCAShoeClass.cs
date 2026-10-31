@@ -222,7 +222,7 @@ namespace BJ_CA
         public bool HandPossible(BJCAHandClass hand)
         {
             bool HandPossibleRet = default;
-            HandPossibleRet = Cards[1] >= hand.Cards[1] & Cards[2] >= hand.Cards[2] & Cards[3] >= hand.Cards[3] & Cards[4] >= hand.Cards[4] & Cards[5] >= hand.Cards[5] & Cards[6] >= hand.Cards[6] & Cards[7] >= hand.Cards[7] & Cards[8] >= hand.Cards[8] & Cards[9] >= hand.Cards[9] & Cards[10] >= hand.Cards[0];
+            HandPossibleRet = Cards[1] >= hand.Cards[1] & Cards[2] >= hand.Cards[2] & Cards[3] >= hand.Cards[3] & Cards[4] >= hand.Cards[4] & Cards[5] >= hand.Cards[5] & Cards[6] >= hand.Cards[6] & Cards[7] >= hand.Cards[7] & Cards[8] >= hand.Cards[8] & Cards[9] >= hand.Cards[9] & Cards[10] >= hand.Cards[10];
 
 
 

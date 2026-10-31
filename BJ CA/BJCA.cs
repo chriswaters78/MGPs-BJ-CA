@@ -5830,10 +5830,10 @@ namespace BJ_CA
                                                     Opt.HandEVs[index].SplitData[PlayerHands[index].PairIndex[paircard], SplitCalcHands[hands]].StratPushEV[upcard] = 0d;
                                                 }
 
-                                                temphand.Cards[paircard] -= NPxHands[SplitCalcHands[hands]].NP + 1;
-                                                temphand.NumCards -= NPxHands[SplitCalcHands[hands]].NP + 1;
                                             }
                                         }
+                                        temphand.Cards[paircard] -= NPxHands[SplitCalcHands[hands]].NP + 1;
+                                        temphand.NumCards -= NPxHands[SplitCalcHands[hands]].NP + 1;
                                     }
                                 }
 
@@ -8064,9 +8064,8 @@ namespace BJ_CA
                         }
                     }
                     strat = cStrat.HandEVs[newIndex].EVs.Strat[upcard];
-                    // As in the original, "~RPreallowed" is non-zero for every surrender type (0-2), so any R
-                    // hand is played on as a hit; probably meant to be "surrender not allowed".
-                    if (strat == (int)BJCAGlobalsClass.Strat.H | strat == (int)BJCAGlobalsClass.Strat.P | strat == (int)BJCAGlobalsClass.Strat.PH | strat == (int)BJCAGlobalsClass.Strat.D & !cStrat.HandEVs[newIndex].DPreallowed[upcard] | strat == (int)BJCAGlobalsClass.Strat.R & ~cStrat.HandEVs[newIndex].RPreallowed[upcard] != 0)
+                    // A hand is played on if it is hit, or doubled or surrendered where that is not allowed.
+                    if (strat == (int)BJCAGlobalsClass.Strat.H | strat == (int)BJCAGlobalsClass.Strat.P | strat == (int)BJCAGlobalsClass.Strat.PH | strat == (int)BJCAGlobalsClass.Strat.D & !cStrat.HandEVs[newIndex].DPreallowed[upcard] | strat == (int)BJCAGlobalsClass.Strat.R & cStrat.HandEVs[newIndex].RPreallowed[upcard] == (int)BJCAGlobalsClass.Surr.NS)
                     {
                         HandsUsed(ref cStrat, upcard, newIndex, stratIndex);
                     }
@@ -9596,7 +9595,7 @@ namespace BJ_CA
                                                         }
                                                 }
                                             }
-                                            if (Conversions.ToBoolean(~TD.HandEVs[index].RPreallowed[upcard]))
+                                            if (TD.HandEVs[index].RPreallowed[upcard] == (int)BJCAGlobalsClass.Surr.NS)
                                             {
                                                 switch (tdstrat)
                                                 {
@@ -9719,7 +9718,7 @@ namespace BJ_CA
                                                             }
                                                     }
                                                 }
-                                                if (Conversions.ToBoolean(~Forced.HandEVs[index].RPreallowed[upcard]))
+                                                if (Forced.HandEVs[index].RPreallowed[upcard] == (int)BJCAGlobalsClass.Surr.NS)
                                                 {
                                                     switch (tdstrat)
                                                     {
@@ -9858,7 +9857,7 @@ namespace BJ_CA
                                                                                 }
                                                                         }
                                                                     }
-                                                                    if (Conversions.ToBoolean(~TD.HandEVs[index].RPostallowed[upcard]))
+                                                                    if (TD.HandEVs[index].RPostallowed[upcard] == (int)BJCAGlobalsClass.Surr.NS)
                                                                     {
                                                                         switch (tdstrat)
                                                                         {
@@ -10017,7 +10016,7 @@ namespace BJ_CA
                                                                                     }
                                                                             }
                                                                         }
-                                                                        if (Conversions.ToBoolean(~Forced.HandEVs[index].RPostallowed[upcard]))
+                                                                        if (Forced.HandEVs[index].RPostallowed[upcard] == (int)BJCAGlobalsClass.Surr.NS)
                                                                         {
                                                                             switch (tdstrat)
                                                                             {
@@ -10069,7 +10068,7 @@ namespace BJ_CA
                                                                             newException.Index = index;
                                                                             newException.Upcard = upcard;
                                                                             newException.Paircard = paircard;
-                                                                            newException.ExceptionType = (int)BJCAGlobalsClass.ExType.CDTDPost;
+                                                                            newException.ExceptionType = (int)BJCAGlobalsClass.ExType.CDForcedPost;
                                                                             newException.SplitHand = hands;
                                                                             newException.ShoeState = paircard.ToString() + "  " + NPxHands[hands].Name;
                                                                             newException.ExceptionName = GetHandString(PlayerHands[index].Hand) + " v " + upcard.ToString() + " " + C.StratShortText[strat2] + " Post-Split " + paircard.ToString() + "  " + NPxHands[hands].Name;
@@ -11649,7 +11648,7 @@ namespace BJ_CA
                                                         }
                                                 }
                                             }
-                                            if (Conversions.ToBoolean(~TD.HandEVs[index].RPreallowed[upcard]))
+                                            if (TD.HandEVs[index].RPreallowed[upcard] == (int)BJCAGlobalsClass.Surr.NS)
                                             {
                                                 switch (tdstrat)
                                                 {
@@ -11804,7 +11803,7 @@ namespace BJ_CA
                                                                                 }
                                                                         }
                                                                     }
-                                                                    if (Conversions.ToBoolean(~TD.HandEVs[index].RPostallowed[upcard]))
+                                                                    if (TD.HandEVs[index].RPostallowed[upcard] == (int)BJCAGlobalsClass.Surr.NS)
                                                                     {
                                                                         switch (tdstrat)
                                                                         {
@@ -12604,7 +12603,7 @@ namespace BJ_CA
                     }
             }
 
-            if (paircard == 1 & postsplit & (!(newEVs.Hand.StratEV[upcard] == (double)BJCAGlobalsClass.Strat.P) | !SMA))
+            if (paircard == 1 & postsplit & (newEVs.Hand.Strat[upcard] != (int)BJCAGlobalsClass.Strat.P | !SMA))
             {
                 tempEVs = ComputePostSplitAcesStratRT(index, upcard);
                 newEVs.Hand.DEV[upcard] = tempEVs.DEV[upcard];
@@ -13147,12 +13146,12 @@ namespace BJ_CA
                                 forcedTableRule.Upcard = upcard;
                                 switch (upcard)
                                 {
-                                    case 0:
+                                    case 1:
                                         {
                                             UCStr = "A";
                                             break;
                                         }
-                                    case 9:
+                                    case 10:
                                         {
                                             UCStr = "T";
                                             break;
@@ -13239,12 +13238,12 @@ namespace BJ_CA
                                     forcedTableRule.Upcard = upcard;
                                     switch (upcard)
                                     {
-                                        case 0:
+                                        case 1:
                                             {
                                                 UCStr = "A";
                                                 break;
                                             }
-                                        case 9:
+                                        case 10:
                                             {
                                                 UCStr = "T";
                                                 break;
@@ -13304,12 +13303,12 @@ namespace BJ_CA
                                 forcedTableRule.Upcard = upcard;
                                 switch (upcard)
                                 {
-                                    case 0:
+                                    case 1:
                                         {
                                             UCStr = "A";
                                             break;
                                         }
-                                    case 9:
+                                    case 10:
                                         {
                                             UCStr = "T";
                                             break;
@@ -13396,12 +13395,12 @@ namespace BJ_CA
                                     forcedTableRule.Upcard = upcard;
                                     switch (upcard)
                                     {
-                                        case 0:
+                                        case 1:
                                             {
                                                 UCStr = "A";
                                                 break;
                                             }
-                                        case 9:
+                                        case 10:
                                             {
                                                 UCStr = "T";
                                                 break;
@@ -13461,12 +13460,12 @@ namespace BJ_CA
                                 forcedTableRule.Upcard = upcard;
                                 switch (upcard)
                                 {
-                                    case 0:
+                                    case 1:
                                         {
                                             UCStr = "A";
                                             break;
                                         }
-                                    case 9:
+                                    case 10:
                                         {
                                             UCStr = "T";
                                             break;
@@ -13553,12 +13552,12 @@ namespace BJ_CA
                                     forcedTableRule.Upcard = upcard;
                                     switch (upcard)
                                     {
-                                        case 0:
+                                        case 1:
                                             {
                                                 UCStr = "A";
                                                 break;
                                             }
-                                        case 9:
+                                        case 10:
                                             {
                                                 UCStr = "T";
                                                 break;
