@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using static BJ_CA.BJCAShared;
 using ClosedXML.Excel;
@@ -543,10 +544,17 @@ namespace BJ_CA
 
         private BJCAHandEVsClass GetHandEV(int total, BJCAHandEVsClass handEVs, int upcard, double bjadjprob)
         {
+            var newEVs = new BJCAHandEVsClass();
+            SetHandEV(total, handEVs, upcard, bjadjprob, newEVs);
+            return newEVs;
+        }
+
+        // Writes the stand EVs for one upcard into newEVs, leaving its other entries alone.
+        private void SetHandEV(int total, BJCAHandEVsClass handEVs, int upcard, double bjadjprob, BJCAHandEVsClass newEVs)
+        {
             double win;
             var lose = default(double);
             var push = default(double);
-            var newEVs = new BJCAHandEVsClass();
 
             switch (total)
             {
@@ -617,8 +625,10 @@ namespace BJ_CA
             {
                 newEVs.BJStandEV[upcard] = 1d;
             }
-
-            return newEVs;
+            else
+            {
+                newEVs.BJStandEV[upcard] = upcard == 1 | upcard == 10 ? -1 : 0;   // a new BJCAHandEVsClass's value
+            }
         }
 
         #endregion
@@ -2321,9 +2331,7 @@ namespace BJ_CA
             int dIndex;
             int total;
             double bjadjprob;
-            var tempEVs = new BJCAHandEVsClass();
             var newEVs = new BJCAHandEVsClass();
-            var dprobs = new BJCADealerProbsClass();
             string key;
             // The Hand does not need to be dealt or undealt, however the Upcard should NOT be dealt yet.
 
@@ -2417,6 +2425,7 @@ namespace BJ_CA
             // Update the dictionary with the non-BJ adjusted dealerprobs
             if (!DealerProbs.Contains(key) & SaveDPDictionary)
             {
+                var dprobs = new BJCADealerProbsClass();
                 for (upcard = 1; upcard <= 10; upcard++)
                 {
                     for (total = 17; total <= 21; total++)
@@ -2472,16 +2481,51 @@ namespace BJ_CA
                         bjadjprob = 0d;
                     }
 
-                    tempEVs.Empty();
-                    tempEVs = GetHandEV(hand.Total, newEVs, upcard, bjadjprob);
-                    newEVs.StandEV[upcard] = tempEVs.StandEV[upcard];
-                    newEVs.StandPushEV[upcard] = tempEVs.StandPushEV[upcard];
-                    newEVs.BJStandEV[upcard] = tempEVs.BJStandEV[upcard];
+                    // SetHandEV reads only DealerProbs, which it does not write.
+                    SetHandEV(hand.Total, newEVs, upcard, bjadjprob, newEVs);
                 }
             }
 
             return newEVs;
 
+        }
+
+        // ComputeStandHand(hand, upcard, upcard, false) for the split code, which asks for the same shoe
+        // state many times over (once per strategy, split state and card order). The rules it reads are
+        // fixed for the life of this object, so its result depends only on the cards removed, the player's
+        // total, the upcard and whether the dealer checks for blackjack (CheckAce/CheckTen are switched
+        // during splits), and those form the key. Callers read only this upcard's stand EVs, and a fresh
+        // copy is returned each time because callers modify it.
+        [NonSerialized]
+        private Dictionary<SplitStandKey, BJCAHandEVsClass> splitStandMemo;
+
+        private readonly record struct SplitStandKey(ulong Ranks1To8, ushort Ranks9To10, byte Total, byte Upcard, ushort NumCards, bool CheckAce, bool CheckTen);
+
+        private BJCAHandEVsClass ComputeSplitStandHand(BJCAHandClass hand, int upcard)
+        {
+            ulong ranks1To8 = 0;
+            for (int card = 1; card <= 8; card++)
+            {
+                if (hand.Cards[card] is < 0 or > 255)
+                    return ComputeStandHand(hand, upcard, upcard, false);
+                ranks1To8 |= (ulong)hand.Cards[card] << (8 * (card - 1));
+            }
+            if (hand.Cards[9] is < 0 or > 255 | hand.Cards[10] is < 0 or > 255 | hand.Total is < 0 or > 255 | hand.NumCards is < 0 or > ushort.MaxValue)
+                return ComputeStandHand(hand, upcard, upcard, false);
+
+            var key = new SplitStandKey(ranks1To8, (ushort)(hand.Cards[9] | hand.Cards[10] << 8), (byte)hand.Total, (byte)upcard, (ushort)hand.NumCards, CheckAce, CheckTen);
+            splitStandMemo ??= new Dictionary<SplitStandKey, BJCAHandEVsClass>();
+            if (!splitStandMemo.TryGetValue(key, out var stored))
+            {
+                stored = ComputeStandHand(hand, upcard, upcard, false);
+                splitStandMemo.Add(key, stored);
+            }
+
+            var newEVs = new BJCAHandEVsClass();
+            newEVs.StandEV[upcard] = stored.StandEV[upcard];
+            newEVs.StandPushEV[upcard] = stored.StandPushEV[upcard];
+            newEVs.BJStandEV[upcard] = stored.BJStandEV[upcard];
+            return newEVs;
         }
 
         private void ComputeStand()
@@ -6198,7 +6242,7 @@ namespace BJ_CA
                                         {
                                             CurrentShoe.Undeal(upcard);
                                             CurrentShoe.Hand.Total = CurrentPHand.Total;
-                                            newEVs = ComputeStandHand(CurrentShoe.Hand, upcard, upcard, false);
+                                            newEVs = ComputeSplitStandHand(CurrentShoe.Hand, upcard);
                                             newHand.HandEVs.Empty();
                                             newHand.HandEVs.StandEV[upcard] = newEVs.StandEV[upcard];
                                             newHand.HandEVs.BJStandEV[upcard] = newEVs.BJStandEV[upcard];
@@ -6334,7 +6378,7 @@ namespace BJ_CA
                                                 {
                                                     CurrentShoe.Undeal(upcard);
                                                     CurrentShoe.Hand.Total = CurrentPHand.Total - 10;
-                                                    newEVs = ComputeStandHand(CurrentShoe.Hand, upcard, upcard, false);
+                                                    newEVs = ComputeSplitStandHand(CurrentShoe.Hand, upcard);
                                                     EV = newEVs.StandEV[upcard] * prob;
                                                     cEV = cProb * (newEVs.StandEV[upcard] - newEVs.BJStandEV[upcard] * bjadjprob) / (1d - bjadjprob);
                                                     CurrentShoe.Deal(upcard);
@@ -6378,7 +6422,7 @@ namespace BJ_CA
                                                     {
                                                         CurrentShoe.Undeal(upcard);
                                                         CurrentShoe.Hand.Total = CurrentPHand.Total;
-                                                        newEVs = ComputeStandHand(CurrentShoe.Hand, upcard, upcard, false);
+                                                        newEVs = ComputeSplitStandHand(CurrentShoe.Hand, upcard);
                                                         EV = newEVs.StandEV[upcard] * prob;
                                                         cEV = cProb * (newEVs.StandEV[upcard] - newEVs.BJStandEV[upcard] * bjadjprob) / (1d - bjadjprob);
                                                         CurrentShoe.Deal(upcard);
@@ -6776,7 +6820,7 @@ namespace BJ_CA
                                     {
                                         CurrentShoe.Undeal(upcard, 1);
                                         CurrentShoe.Hand.Total = CurrentPHand.Total;
-                                        newEVs = ComputeStandHand(CurrentShoe.Hand, upcard, upcard, false);
+                                        newEVs = ComputeSplitStandHand(CurrentShoe.Hand, upcard);
                                         newHand.HandEVs.Empty();
                                         newHand.HandEVs.StandEV[upcard] = newEVs.StandEV[upcard];
                                         newHand.HandEVs.StandPushEV[upcard] = newEVs.StandPushEV[upcard];
@@ -6915,7 +6959,7 @@ namespace BJ_CA
                                             {
                                                 CurrentShoe.Undeal(upcard, 1);
                                                 CurrentShoe.Hand.Total = CurrentPHand.Total - 10;
-                                                newEVs = ComputeStandHand(CurrentShoe.Hand, upcard, upcard, false);
+                                                newEVs = ComputeSplitStandHand(CurrentShoe.Hand, upcard);
 
                                                 tempEV = newEVs.StandEV[upcard];
                                                 tempPush = newEVs.StandPushEV[upcard];
@@ -6963,7 +7007,7 @@ namespace BJ_CA
                                                 {
                                                     CurrentShoe.Undeal(upcard, 1);
                                                     CurrentShoe.Hand.Total = CurrentPHand.Total;
-                                                    newEVs = ComputeStandHand(CurrentShoe.Hand, upcard, upcard, false);
+                                                    newEVs = ComputeSplitStandHand(CurrentShoe.Hand, upcard);
                                                     tempEV = newEVs.StandEV[upcard];
                                                     tempPush = newEVs.StandPushEV[upcard];
                                                     tempBJEV = newEVs.BJStandEV[upcard];
@@ -8020,7 +8064,9 @@ namespace BJ_CA
                         }
                     }
                     strat = cStrat.HandEVs[newIndex].EVs.Strat[upcard];
-                    if (Conversions.ToBoolean(Conversions.ToInteger(strat == (int)BJCAGlobalsClass.Strat.H | strat == (int)BJCAGlobalsClass.Strat.P | strat == (int)BJCAGlobalsClass.Strat.PH | strat == (int)BJCAGlobalsClass.Strat.D & !cStrat.HandEVs[newIndex].DPreallowed[upcard]) | Conversions.ToInteger(strat == (int)BJCAGlobalsClass.Strat.R) & ~cStrat.HandEVs[newIndex].RPreallowed[upcard]))
+                    // As in the original, "~RPreallowed" is non-zero for every surrender type (0-2), so any R
+                    // hand is played on as a hit; probably meant to be "surrender not allowed".
+                    if (strat == (int)BJCAGlobalsClass.Strat.H | strat == (int)BJCAGlobalsClass.Strat.P | strat == (int)BJCAGlobalsClass.Strat.PH | strat == (int)BJCAGlobalsClass.Strat.D & !cStrat.HandEVs[newIndex].DPreallowed[upcard] | strat == (int)BJCAGlobalsClass.Strat.R & ~cStrat.HandEVs[newIndex].RPreallowed[upcard] != 0)
                     {
                         HandsUsed(ref cStrat, upcard, newIndex, stratIndex);
                     }

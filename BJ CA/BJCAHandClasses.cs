@@ -220,87 +220,106 @@ namespace BJ_CA
 
     }
 
+    // The engine creates these in its inner loops but each caller uses only a few of the arrays, so each
+    // array is created on first use. An array that has not been created reads as its initial value.
     [Serializable()]
     public class BJCAHandEVsClass
     {
-        public double[] Prob = new double[11];                 // Probability of Hand occurring given upcard
-        public double[] SumSuited = new double[11];            // Net probability of the hand being suited
-        public double[,] ProbSuited = new double[11, 5];        // Probability of Hand being a given suit
-        public bool[,] SuitedPossible = new bool[11, 5];   // Possibility of Hand being suited
+        private double[] _prob, _sumSuited, _standEV, _standPushEV, _dEV, _dPushEV, _dStratEV, _dStratPushEV, _surrEV, _bjProb, _bjStandEV, _bonusEV;
+        private double[,] _probSuited, _dealerProbs;
+        private bool[,] _suitedPossible;
+        private bool[] _standDone;
+        private int[] _dStrat;
 
-        public double[] StandEV = new double[11];              // Upcard   Stand EV's relative to each dealer upcard
-        public double[] StandPushEV = new double[11];          // Upcard   EV of pushing; can be used for special rules and variance
-        public bool[] StandDone = new bool[11];
-        public double[,] DealerProbs = new double[11, 5];       // Upcard
+        public double[] Prob => _prob ??= new double[11];                          // Probability of Hand occurring given upcard
+        public double[] SumSuited => _sumSuited ??= new double[11];                // Net probability of the hand being suited
+        public double[,] ProbSuited => _probSuited ??= new double[11, 5];          // Probability of Hand being a given suit
+        public bool[,] SuitedPossible => _suitedPossible ??= new bool[11, 5];      // Possibility of Hand being suited
 
-        public double[] DEV = new double[11];                  // Upcard   Double EV's relative to each dealer upcard
-        public double[] DPushEV = new double[11];              // Upcard   EV of pushing; can be used for special rules and variance
+        public double[] StandEV => _standEV ??= new double[11];                    // Upcard   Stand EV's relative to each dealer upcard
+        public double[] StandPushEV => _standPushEV ??= new double[11];            // Upcard   EV of pushing; can be used for special rules and variance
+        public bool[] StandDone => _standDone ??= new bool[11];
+        public double[,] DealerProbs => _dealerProbs ??= new double[11, 5];        // Upcard
 
-        public int[] DStrat = new int[11];
-        public double[] DStratEV = new double[11];
-        public double[] DStratPushEV = new double[11];         // Upcard   This is necessary because of soft doubles can be hard
+        public double[] DEV => _dEV ??= new double[11];                            // Upcard   Double EV's relative to each dealer upcard
+        public double[] DPushEV => _dPushEV ??= new double[11];                    // Upcard   EV of pushing; can be used for special rules and variance
 
-        public double[] SurrEV = new double[11];               // Upcard   Surrender EV's relative to each dealer upcard
+        public int[] DStrat => _dStrat ??= new int[11];
+        public double[] DStratEV => _dStratEV ??= new double[11];
+        public double[] DStratPushEV => _dStratPushEV ??= new double[11];          // Upcard   This is necessary because of soft doubles can be hard
 
-        public double[] BJProb = new double[11];               // Upcard   Stand EV's relative to each dealer upcard
-        public double[] BJStandEV = new double[11];            // Upcard   Stand EV's relative to each dealer upcard
+        public double[] SurrEV => _surrEV ??= new double[11];                      // Upcard   Surrender EV's relative to each dealer upcard
 
-        public double[] BonusEV = new double[11];               // Upcard   Stand EV's relative to each dealer upcard
+        public double[] BJProb => _bjProb ??= new double[11];                      // Upcard   Stand EV's relative to each dealer upcard
+        public double[] BJStandEV => _bjStandEV ??= NewBJStandEV();                // Upcard   Stand EV's relative to each dealer upcard
 
-        public BJCAHandEVsClass()
+        public double[] BonusEV => _bonusEV ??= new double[11];                    // Upcard   Stand EV's relative to each dealer upcard
+
+        private static double[] NewBJStandEV()
         {
-            BJStandEV[1] = -1;
-            BJStandEV[10] = -1;
+            var bjStandEV = new double[11];
+            bjStandEV[1] = -1;
+            bjStandEV[10] = -1;
+            return bjStandEV;
         }
 
+        // Resets everything except the suited and blackjack probabilities to its initial value.
         public void Empty()
         {
-            int card;
-            int total;
-
-            for (card = 0; card <= 10; card++)
+            Clear(_prob);
+            Clear(_standEV);
+            Clear(_standPushEV);
+            if (_standDone is not null) Array.Clear(_standDone);
+            Clear(_dEV);
+            Clear(_dPushEV);
+            if (_dStrat is not null) Array.Clear(_dStrat);
+            Clear(_dStratEV);
+            Clear(_dStratPushEV);
+            Clear(_surrEV);
+            if (_bjStandEV is not null)
             {
-                Prob[card] = 0d;
-                StandEV[card] = 0d;
-                StandPushEV[card] = 0d;
-                StandDone[card] = Conversions.ToBoolean(0);
-                DEV[card] = 0d;
-                DPushEV[card] = 0d;
-                DStrat[card] = 0;
-                DStratEV[card] = 0d;
-                DStratPushEV[card] = 0d;
-                SurrEV[card] = 0d;
-                BJStandEV[card] = 0d;
-                BonusEV[card] = 0d;
-                for (total = 0; total <= 4; total++)
-                    DealerProbs[card, total] = 0d;
+                Array.Clear(_bjStandEV);
+                _bjStandEV[1] = -1;
+                _bjStandEV[10] = -1;
             }
-            BJStandEV[1] = -1;
-            BJStandEV[10] = -1;
+            Clear(_bonusEV);
+            if (_dealerProbs is not null) Array.Clear(_dealerProbs);
         }
 
+        // Copies everything except the suited and blackjack probabilities, in place.
         public void Copy(BJCAHandEVsClass originalHand)
         {
-            int card;
-            int total;
+            CopyArray(ref _prob, originalHand._prob);
+            CopyArray(ref _standEV, originalHand._standEV);
+            CopyArray(ref _standPushEV, originalHand._standPushEV);
+            CopyArray(ref _standDone, originalHand._standDone);
+            CopyArray(ref _dEV, originalHand._dEV);
+            CopyArray(ref _dPushEV, originalHand._dPushEV);
+            CopyArray(ref _dStrat, originalHand._dStrat);
+            CopyArray(ref _dStratEV, originalHand._dStratEV);
+            CopyArray(ref _dStratPushEV, originalHand._dStratPushEV);
+            CopyArray(ref _surrEV, originalHand._surrEV);
+            if (originalHand._bjStandEV is not null || _bjStandEV is not null)
+                Array.Copy(originalHand.BJStandEV, BJStandEV, 11);
+            CopyArray(ref _bonusEV, originalHand._bonusEV);
+            if (originalHand._dealerProbs is not null)
+                Array.Copy(originalHand._dealerProbs, DealerProbs, originalHand._dealerProbs.Length);
+            else if (_dealerProbs is not null)
+                Array.Clear(_dealerProbs);
+        }
 
-            for (card = 0; card <= 10; card++)
-            {
-                Prob[card] = originalHand.Prob[card];
-                StandEV[card] = originalHand.StandEV[card];
-                StandPushEV[card] = originalHand.StandPushEV[card];
-                StandDone[card] = originalHand.StandDone[card];
-                DEV[card] = originalHand.DEV[card];
-                DPushEV[card] = originalHand.DPushEV[card];
-                DStrat[card] = originalHand.DStrat[card];
-                DStratEV[card] = originalHand.DStratEV[card];
-                DStratPushEV[card] = originalHand.DStratPushEV[card];
-                SurrEV[card] = originalHand.SurrEV[card];
-                BJStandEV[card] = originalHand.BJStandEV[card];
-                BonusEV[card] = originalHand.BonusEV[card];
-                for (total = 0; total <= 4; total++)
-                    DealerProbs[card, total] = originalHand.DealerProbs[card, total];
-            }
+        private static void Clear(double[] array)
+        {
+            if (array is not null) Array.Clear(array);
+        }
+
+        // Makes target hold source's values, treating a missing array as all zeros.
+        private static void CopyArray<T>(ref T[] target, T[] source)
+        {
+            if (source is not null)
+                Array.Copy(source, target ??= new T[source.Length], source.Length);
+            else if (target is not null)
+                Array.Clear(target);
         }
     }
 
@@ -387,24 +406,30 @@ namespace BJ_CA
     }
 
     [Serializable()]
+    // The split recursion creates one of these per node as scratch space and uses only Hand and HandEVs,
+    // so the other arrays are created on first use.
     public class BJCAPlayerHandClass
     {
+        private int[] _hitHand, _rPreallowed, _rPostallowed, _pairIndex;
+        private bool[] _pAllowed, _dPreallowed, _dPostallowed;
+        private BJCAHandEVsClass[,] _splitEVs;
+
         public BJCAHandClass Hand = new BJCAHandClass();            // The actual hand
         public BJCAHandEVsClass HandEVs = new BJCAHandEVsClass();      // EVs for full deck
 
-        public int[] HitHand = new int[11];               // Hand in index that follows if (card) is hit
+        public int[] HitHand => _hitHand ??= new int[11];                  // Hand in index that follows if (card) is hit
         public int NextHand;                  // Next hand in list with same count
 
         // Strategies allowed by the game rules
-        public bool[] PAllowed = new bool[11];              // Split Allowed
-        public bool[] DPreallowed = new bool[11];           // Double Allowed Pre-Split
-        public int[] RPreallowed = new int[11];           // Surrender Type Allowed Pre-Split
+        public bool[] PAllowed => _pAllowed ??= new bool[11];              // Split Allowed
+        public bool[] DPreallowed => _dPreallowed ??= new bool[11];        // Double Allowed Pre-Split
+        public int[] RPreallowed => _rPreallowed ??= new int[11];          // Surrender Type Allowed Pre-Split
 
-        public bool[] DPostallowed = new bool[11];          // Double Allowed Post-Split
-        public int[] RPostallowed = new int[11];          // Surrender Type Allowed Post-Split
+        public bool[] DPostallowed => _dPostallowed ??= new bool[11];      // Double Allowed Post-Split
+        public int[] RPostallowed => _rPostallowed ??= new int[11];        // Surrender Type Allowed Post-Split
 
-        public int[] PairIndex = new int[11];             // Paircard - stores the reference index for the split data
-        public BJCAHandEVsClass[,] SplitEVs = new BJCAHandEVsClass[7, 12];
+        public int[] PairIndex => _pairIndex ??= new int[11];              // Paircard - stores the reference index for the split data
+        public BJCAHandEVsClass[,] SplitEVs => _splitEVs ??= new BJCAHandEVsClass[7, 12];
 
         public BJCASuitedBonusEVClass SuitedBonusEVs;   // Only initialize if suited bonus is possible
     }
@@ -425,60 +450,60 @@ namespace BJ_CA
         public BJCASuitedBonusEVClass SuitedEVs;     // This is only initialized if needed
     }
 
+    // Created once per node of the split recursion, so, as with BJCAHandEVsClass, each array is created on
+    // first use and an array that has not been created reads as its initial value.
     [Serializable()]
     public class BJCASplitHandEVsClass
     {
-        public double[] Prob = new double[11];                 // Probability of Hand occurring given upcard
-        public double[] StandEV = new double[11];              // Upcard   Stand EV's relative to each dealer upcard
-        public double[] DEV = new double[11];                  // Upcard   Double EV's relative to each dealer upcard
-        public double[] SurrEV = new double[11];               // Upcard   Surrender EV's relative to each dealer upcard
-        public double[] BJProb = new double[11];               // Upcard   Stand EV's relative to each dealer upcard
-        public double[] BJEV = new double[11];                 // Upcard   Stand EV's relative to each dealer upcard
-        public double[] BonusEV = new double[11];              // Upcard   Stand EV's relative to each dealer upcard
+        private double[] _prob, _standEV, _dEV, _surrEV, _bjProb, _bjEV, _bonusEV, _cEV, _bjCEV, _pRes, _bboEV, _obboEV;
+
+        public double[] Prob => _prob ??= new double[11];                  // Probability of Hand occurring given upcard
+        public double[] StandEV => _standEV ??= new double[11];            // Upcard   Stand EV's relative to each dealer upcard
+        public double[] DEV => _dEV ??= new double[11];                    // Upcard   Double EV's relative to each dealer upcard
+        public double[] SurrEV => _surrEV ??= new double[11];              // Upcard   Surrender EV's relative to each dealer upcard
+        public double[] BJProb => _bjProb ??= new double[11];              // Upcard   Stand EV's relative to each dealer upcard
+        public double[] BJEV => _bjEV ??= NewBJEV();                       // Upcard   Stand EV's relative to each dealer upcard
+        public double[] BonusEV => _bonusEV ??= new double[11];            // Upcard   Stand EV's relative to each dealer upcard
 
         // The following are used for OBBO Calcs
-        public double[] CEV = new double[11];                  // Upcard   CEV
-        public double[] BJCEV = new double[11];                // Upcard   p*EV
-        public double[] PRes = new double[11];                 // Upcard   Probability of Resolving Hand with BJ
-        public double[] BBOEV = new double[11];                // Upcard   BBO EV
-        public double[] OBBOEV = new double[11];               // Upcard   OBBO EV
+        public double[] CEV => _cEV ??= new double[11];                    // Upcard   CEV
+        public double[] BJCEV => _bjCEV ??= new double[11];                // Upcard   p*EV
+        public double[] PRes => _pRes ??= new double[11];                  // Upcard   Probability of Resolving Hand with BJ
+        public double[] BBOEV => _bboEV ??= new double[11];                // Upcard   BBO EV
+        public double[] OBBOEV => _obboEV ??= new double[11];              // Upcard   OBBO EV
 
-        public BJCASplitHandEVsClass()
+        private static double[] NewBJEV()
         {
-            BJEV[1] = -1;
-            BJEV[10] = -1;
+            var bjEV = new double[11];
+            bjEV[1] = -1;
+            bjEV[10] = -1;
+            return bjEV;
         }
 
+        // Resets the stand, double, surrender and bonus EVs to their initial values.
         public void Empty()
         {
-            int card;
-
-            for (card = 0; card <= 10; card++)
+            if (_prob is not null) Array.Clear(_prob);
+            if (_standEV is not null) Array.Clear(_standEV);
+            if (_dEV is not null) Array.Clear(_dEV);
+            if (_surrEV is not null) Array.Clear(_surrEV);
+            if (_bjEV is not null)
             {
-                Prob[card] = 0d;
-                StandEV[card] = 0d;
-                DEV[card] = 0d;
-                SurrEV[card] = 0d;
-                BJEV[card] = 0d;
-                BonusEV[card] = 0d;
+                Array.Clear(_bjEV);
+                _bjEV[1] = -1;
+                _bjEV[10] = -1;
             }
-            BJEV[1] = -1;
-            BJEV[10] = -1;
+            if (_bonusEV is not null) Array.Clear(_bonusEV);
         }
 
         public void Copy(BJCAHandEVsClass originalHand)
         {
-            int card;
-
-            for (card = 0; card <= 10; card++)
-            {
-                Prob[card] = originalHand.Prob[card];
-                StandEV[card] = originalHand.StandEV[card];
-                DEV[card] = originalHand.DEV[card];
-                SurrEV[card] = originalHand.SurrEV[card];
-                BJEV[card] = originalHand.BJStandEV[card];
-                BonusEV[card] = originalHand.BonusEV[card];
-            }
+            Array.Copy(originalHand.Prob, Prob, 11);
+            Array.Copy(originalHand.StandEV, StandEV, 11);
+            Array.Copy(originalHand.DEV, DEV, 11);
+            Array.Copy(originalHand.SurrEV, SurrEV, 11);
+            Array.Copy(originalHand.BJStandEV, BJEV, 11);
+            Array.Copy(originalHand.BonusEV, BonusEV, 11);
         }
     }
 }
