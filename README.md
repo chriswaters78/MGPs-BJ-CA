@@ -1,8 +1,35 @@
 # MGPs-BJ-CA
 MGPs Blackjack Combinatorial Analysis.  Exact calculations including splits and insurance.
 
-Help file: \BJCA\MGP BJ CA Help.pdf
-
-Executable in BJ CA\bin
+Help file: BJ CA\MGP's BJ CA Help.pdf (also available from Help in the application)
 
 MGP
+
+## Building and running
+
+The application is a C# Windows Forms project targeting .NET 10 (Windows only). It was converted from the
+original VB.NET (.NET Framework 3.5) source, which is in the git history before this change.
+
+Requirements: the .NET 10 SDK. Microsoft Excel is only needed for "Send Results to Excel".
+
+```
+dotnet build "BJ CA.sln"
+dotnet run --project "BJ CA\BJ CA.csproj"
+```
+
+Or open `BJ CA.sln` in Visual Studio 2026 and run the `BJ CA` project.
+
+The build copies the files the application uses into the output folder (`BJ CA\bin\<Configuration>\net10.0-windows`):
+
+- `BJCA.ini` – the default rule settings (Options > Set Defaults rewrites it)
+- `DealerProbs *.dat` – cached dealer probabilities (Options > Update Dealer Probs File adds to them)
+- `MGPs BJ CA Results.xls` – the workbook "Send Results to Excel" fills in
+- `MGP's BJ CA Help.pdf`
+
+These start from the copies in `BJ CA\Data` and the project folder. Once the application has changed them in the
+output folder, later builds leave them alone.
+
+Rule set (`.rs`), strategy, bonus rule and other files saved by earlier versions, including the samples in
+`BJ CA\Sample MGP BJCA v2 Files.zip`, still load.
+
+The `BJCA Setup` installer project was built for the .NET Framework 3.5 version and has not been updated.

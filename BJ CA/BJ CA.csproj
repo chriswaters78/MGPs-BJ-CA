@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>BJ CA</AssemblyName>
+    <RootNamespace>BJ_CA</RootNamespace>
+    <ApplicationIcon>BJCA.ico</ApplicationIcon>
+    <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+    <ApplicationVisualStyles>true</ApplicationVisualStyles>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <Product>MGP's BJ CA</Product>
+    <Description>MGP's Blackjack Combinatorial Analyzer</Description>
+    <Copyright>Copyright (c) 2006-2008, MGP</Copyright>
+    <Version>2.0.0</Version>
+    <!-- Rule sets, the INI and the dealer probs caches are BinaryFormatter files. Loading is restricted
+         to BJ CA's own types by BJCAShared.BJCASerializationBinder. -->
+    <EnableUnsafeBinaryFormatterSerialization>true</EnableUnsafeBinaryFormatterSerialization>
+    <NoWarn>$(NoWarn);SYSLIB0011;SYSLIB0050;SYSLIB0051;WFO1000</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Office.Interop.Excel" Version="16.0.18925.20022" ExcludeAssets="runtime" />
+    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="10.0.14" />
+  </ItemGroup>
+
+  <!-- Embed the Excel interop types so the app needs no interop assemblies (the package's assembly
+       depends on office.dll, which it does not ship). -->
+  <Target Name="EmbedExcelInteropTypes" AfterTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <ReferencePath Condition="'%(Filename)' == 'Microsoft.Office.Interop.Excel'">
+        <EmbedInteropTypes>true</EmbedInteropTypes>
+        <Private>false</Private>
+      </ReferencePath>
+    </ItemGroup>
+  </Target>
+
+  <!-- Files the application opens from the folder it runs in. The INI and DealerProbs files are
+       rewritten at runtime, so an existing copy in the output folder is never overwritten. -->
+  <ItemGroup>
+    <None Remove="Data\**" />
+    <None Include="Data\**" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="MGPs BJ CA Results.xls;MGP's BJ CA Help.pdf" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
