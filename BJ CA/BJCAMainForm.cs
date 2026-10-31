@@ -15804,17 +15804,13 @@ namespace BJ_CA
             int row;
             int column;
 
+            // Rows 0-7 (totals below 8) only have check boxes in the first two columns.
             for (row = 0; row <= 17; row++)
             {
                 for (column = 0; column <= 3; column++)
                 {
-                    try
-                    {
+                    if (DChecksArray[row, column] is not null)
                         FormRules.DoubleTable.T[row, column] = DChecksArray[row, column].Checked;
-                    }
-                    catch
-                    {
-                    }
                 }
             }
         }
@@ -15824,17 +15820,13 @@ namespace BJ_CA
             int row;
             int column;
 
+            // Rows 0-7 (totals below 8) only have check boxes in the first two columns.
             for (row = 0; row <= 17; row++)
             {
                 for (column = 0; column <= 3; column++)
                 {
-                    try
-                    {
+                    if (DChecksArray[row, column] is not null)
                         DChecksArray[row, column].Checked = FormRules.DoubleTable.T[row, column];
-                    }
-                    catch
-                    {
-                    }
                 }
             }
         }
