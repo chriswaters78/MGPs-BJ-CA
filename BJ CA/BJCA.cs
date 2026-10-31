@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using static BJ_CA.BJCAShared;
-using Excel = Microsoft.Office.Interop.Excel;
+using ClosedXML.Excel;
 using Microsoft.VisualBasic;
 using Microsoft.VisualBasic.CompilerServices;
 
@@ -10536,30 +10536,31 @@ namespace BJ_CA
 
         #region  Output Methods 
 
-        public void PrintToExcel()
+        // Fills in a copy of the results workbook template (ExcelFilePath) and saves it as outputFile.
+        public void PrintToExcel(string outputFile)
         {
-            // The original tried GetObject(, "Exel.Application") first; the misspelt ProgID meant it always
-            // fell back to opening the workbook in this new instance, which is what is done here.
-            var oexcel = new Excel.Application();
-            var oexcelbook = oexcel.Workbooks.Open(ExcelFilePath);
+            using (var oexcelbook = new XLWorkbook(ExcelFilePath))
+            {
+                PrintStrategiesExcel(oexcelbook);
+                PrintSplitEVsExcel(oexcelbook);
+                PrintGameEVsExcel(oexcelbook);
+                PrintStrategyEVsExcel(oexcelbook);
+                PrintExceptionsExcel(oexcelbook);
+                PrintRulesExcel(oexcelbook);
 
-            PrintStrategiesExcel(oexcelbook);
-            PrintSplitEVsExcel(oexcelbook);
-            PrintGameEVsExcel(oexcelbook);
-            PrintStrategyEVsExcel(oexcelbook);
-            PrintExceptionsExcel(oexcelbook);
-            PrintRulesExcel(oexcelbook);
+                // Open on the Strategy Table, and have Excel recalculate the template's own formulas.
+                foreach (var sheet in oexcelbook.Worksheets)
+                    sheet.TabSelected = false;
+                oexcelbook.Worksheet("Strategy Table").SetTabActive().TabSelected = true;
+                oexcelbook.FullCalculationOnLoad = true;
 
-            ((dynamic)oexcelbook.Worksheets["Strategy Table"]).Select();
-
-            oexcel.Visible = true;
-            oexcelbook = null;
-            oexcel = null;
+                oexcelbook.SaveAs(outputFile);
+            }
         }
 
-        private void PrintStrategiesExcel(Excel.Workbook workBook)
+        private void PrintStrategiesExcel(XLWorkbook workBook)
         {
-            Excel.Worksheet worksheet;
+            IXLWorksheet worksheet;
             int Total;
             int upcard;
             int card;
@@ -10568,56 +10569,55 @@ namespace BJ_CA
             int column;
             int row;
 
-            worksheet = (Excel.Worksheet)workBook.Worksheets["Strategy Table"];
-            worksheet.Select();
-            worksheet.get_Range("C4:L21").ClearContents();
-            worksheet.get_Range("C4:L21").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C25:L34").ClearContents();
-            worksheet.get_Range("C25:L34").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C38:L47").ClearContents();
-            worksheet.get_Range("C38:L47").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C51:L86").ClearContents();
-            worksheet.get_Range("C51:L86").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C90:L98").ClearContents();
-            worksheet.get_Range("C90:L98").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C102:L111").ClearContents();
-            worksheet.get_Range("C102:L111").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C115:L132").ClearContents();
-            worksheet.get_Range("C115:L132").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C136:L145").ClearContents();
-            worksheet.get_Range("C136:L145").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C149:L184").ClearContents();
-            worksheet.get_Range("C149:L184").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C188:L196").ClearContents();
-            worksheet.get_Range("C188:L196").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C200:L209").ClearContents();
-            worksheet.get_Range("C200:L209").Interior.Color = Information.RGB(255, 255, 255);
+            worksheet = workBook.Worksheet("Strategy Table");
+            worksheet.Range("C4:L21").ClearContents();
+            worksheet.Range("C4:L21").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C25:L34").ClearContents();
+            worksheet.Range("C25:L34").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C38:L47").ClearContents();
+            worksheet.Range("C38:L47").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C51:L86").ClearContents();
+            worksheet.Range("C51:L86").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C90:L98").ClearContents();
+            worksheet.Range("C90:L98").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C102:L111").ClearContents();
+            worksheet.Range("C102:L111").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C115:L132").ClearContents();
+            worksheet.Range("C115:L132").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C136:L145").ClearContents();
+            worksheet.Range("C136:L145").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C149:L184").ClearContents();
+            worksheet.Range("C149:L184").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C188:L196").ClearContents();
+            worksheet.Range("C188:L196").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C200:L209").ClearContents();
+            worksheet.Range("C200:L209").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
 
-            worksheet.get_Range("C213:L248").ClearContents();
-            worksheet.get_Range("C213:L248").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C252:L260").ClearContents();
-            worksheet.get_Range("C252:L260").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C264:L273").ClearContents();
-            worksheet.get_Range("C264:L273").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C277:L294").ClearContents();
-            worksheet.get_Range("C277:L294").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("C298:L307").ClearContents();
-            worksheet.get_Range("C298:L307").Interior.Color = Information.RGB(255, 255, 255);
-            worksheet.get_Range("A1").Select();
+            worksheet.Range("C213:L248").ClearContents();
+            worksheet.Range("C213:L248").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C252:L260").ClearContents();
+            worksheet.Range("C252:L260").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C264:L273").ClearContents();
+            worksheet.Range("C264:L273").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C277:L294").ClearContents();
+            worksheet.Range("C277:L294").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("C298:L307").ClearContents();
+            worksheet.Range("C298:L307").Style.Fill.BackgroundColor = XLColor.FromArgb(255, 255, 255);
+            worksheet.Range("A1").SelectOnly();
 
             // Fill in color table in worksheet
-            worksheet.get_Range("O4").Interior.Color = Information.RGB(ColorTable.C[(int)BJCAGlobalsClass.Strat.None].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.None].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.None].B);
-            worksheet.get_Range("O5").Interior.Color = Information.RGB(ColorTable.C[(int)BJCAGlobalsClass.Strat.S].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.S].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.S].B);
-            worksheet.get_Range("O6").Interior.Color = Information.RGB(ColorTable.C[(int)BJCAGlobalsClass.Strat.H].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.H].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.H].B);
-            worksheet.get_Range("O7").Interior.Color = Information.RGB(ColorTable.C[(int)BJCAGlobalsClass.Strat.D].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.D].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.D].B);
-            worksheet.get_Range("O8").Interior.Color = Information.RGB(ColorTable.C[(int)BJCAGlobalsClass.Strat.DS].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.DS].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.DS].B);
-            worksheet.get_Range("O9").Interior.Color = Information.RGB(ColorTable.C[(int)BJCAGlobalsClass.Strat.R].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.R].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.R].B);
-            worksheet.get_Range("O10").Interior.Color = Information.RGB(ColorTable.C[(int)BJCAGlobalsClass.Strat.RS].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.RS].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.RS].B);
-            worksheet.get_Range("O11").Interior.Color = Information.RGB(ColorTable.C[(int)BJCAGlobalsClass.Strat.P].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.P].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.P].B);
-            worksheet.get_Range("O12").Interior.Color = Information.RGB(ColorTable.C[(int)BJCAGlobalsClass.Strat.PS].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.PS].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.PS].B);
-            worksheet.get_Range("O13").Interior.Color = Information.RGB(ColorTable.C[(int)BJCAGlobalsClass.Strat.PH].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.PH].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.PH].B);
-            worksheet.get_Range("O14").Interior.Color = Information.RGB(ColorTable.C[(int)BJCAGlobalsClass.Strat.PD].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.PD].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.PD].B);
-            worksheet.get_Range("O15").Interior.Color = Information.RGB(ColorTable.C[(int)BJCAGlobalsClass.Strat.PR].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.PR].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.PR].B);
+            worksheet.Range("O4").Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[(int)BJCAGlobalsClass.Strat.None].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.None].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.None].B);
+            worksheet.Range("O5").Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[(int)BJCAGlobalsClass.Strat.S].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.S].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.S].B);
+            worksheet.Range("O6").Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[(int)BJCAGlobalsClass.Strat.H].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.H].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.H].B);
+            worksheet.Range("O7").Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[(int)BJCAGlobalsClass.Strat.D].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.D].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.D].B);
+            worksheet.Range("O8").Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[(int)BJCAGlobalsClass.Strat.DS].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.DS].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.DS].B);
+            worksheet.Range("O9").Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[(int)BJCAGlobalsClass.Strat.R].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.R].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.R].B);
+            worksheet.Range("O10").Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[(int)BJCAGlobalsClass.Strat.RS].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.RS].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.RS].B);
+            worksheet.Range("O11").Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[(int)BJCAGlobalsClass.Strat.P].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.P].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.P].B);
+            worksheet.Range("O12").Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[(int)BJCAGlobalsClass.Strat.PS].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.PS].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.PS].B);
+            worksheet.Range("O13").Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[(int)BJCAGlobalsClass.Strat.PH].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.PH].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.PH].B);
+            worksheet.Range("O14").Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[(int)BJCAGlobalsClass.Strat.PD].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.PD].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.PD].B);
+            worksheet.Range("O15").Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[(int)BJCAGlobalsClass.Strat.PR].R, ColorTable.C[(int)BJCAGlobalsClass.Strat.PR].G, ColorTable.C[(int)BJCAGlobalsClass.Strat.PR].B);
 
             CurrentShoe.Reset(OriginalShoe);
             CurrentPHand.Empty();
@@ -10639,8 +10639,8 @@ namespace BJ_CA
                             {
                                 column = upcard - 2;
                             }
-                            worksheet.get_Range("C4").get_Offset(Total - 4, column).Formula = C.StratLongText[TD.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]];
-                            worksheet.get_Range("C4").get_Offset(Total - 4, column).Interior.Color = Information.RGB(ColorTable.C[TD.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].R, ColorTable.C[TD.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].G, ColorTable.C[TD.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].B);
+                            worksheet.Range("C4").Offset(Total - 4, column).SetExcelValue(C.StratLongText[TD.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]]);
+                            worksheet.Range("C4").Offset(Total - 4, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[TD.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].R, ColorTable.C[TD.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].G, ColorTable.C[TD.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].B);
                         }
                     }
                 }
@@ -10660,8 +10660,8 @@ namespace BJ_CA
                             {
                                 column = upcard - 2;
                             }
-                            worksheet.get_Range("C25").get_Offset(Total - 12, column).Formula = C.StratLongText[TD.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]];
-                            worksheet.get_Range("C25").get_Offset(Total - 12, column).Interior.Color = Information.RGB(ColorTable.C[TD.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].R, ColorTable.C[TD.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].G, ColorTable.C[TD.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].B);
+                            worksheet.Range("C25").Offset(Total - 12, column).SetExcelValue(C.StratLongText[TD.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]]);
+                            worksheet.Range("C25").Offset(Total - 12, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[TD.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].R, ColorTable.C[TD.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].G, ColorTable.C[TD.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].B);
                         }
                     }
                 }
@@ -10690,13 +10690,13 @@ namespace BJ_CA
                                 }
                                 if (TD.HandEVs[index].EVs.Strat[upcard] == (int)BJCAGlobalsClass.Strat.P | TD.HandEVs[index].EVs.Strat[upcard] == (int)BJCAGlobalsClass.Strat.PS | TD.HandEVs[index].EVs.Strat[upcard] == (int)BJCAGlobalsClass.Strat.PH | TD.HandEVs[index].EVs.Strat[upcard] == (int)BJCAGlobalsClass.Strat.PD | TD.HandEVs[index].EVs.Strat[upcard] == (int)BJCAGlobalsClass.Strat.PR)
                                 {
-                                    worksheet.get_Range("C38").get_Offset(card - 1, column).Formula = C.StratLongText[TD.HandEVs[index].EVs.Strat[upcard]];
-                                    worksheet.get_Range("C38").get_Offset(card - 1, column).Interior.Color = Information.RGB(ColorTable.C[TD.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[TD.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[TD.HandEVs[index].EVs.Strat[upcard]].B);
+                                    worksheet.Range("C38").Offset(card - 1, column).SetExcelValue(C.StratLongText[TD.HandEVs[index].EVs.Strat[upcard]]);
+                                    worksheet.Range("C38").Offset(card - 1, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[TD.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[TD.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[TD.HandEVs[index].EVs.Strat[upcard]].B);
                                 }
                                 else
                                 {
-                                    worksheet.get_Range("C38").get_Offset(card - 1, column).Formula = C.StratLongText[0];
-                                    worksheet.get_Range("C38").get_Offset(card - 1, column).Interior.Color = Information.RGB(ColorTable.C[0].R, ColorTable.C[0].G, ColorTable.C[0].B);
+                                    worksheet.Range("C38").Offset(card - 1, column).SetExcelValue(C.StratLongText[0]);
+                                    worksheet.Range("C38").Offset(card - 1, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[0].R, ColorTable.C[0].G, ColorTable.C[0].B);
                                 }
                             }
                         }
@@ -10740,8 +10740,8 @@ namespace BJ_CA
                                         {
                                             column = upcard - 2;
                                         }
-                                        worksheet.get_Range("C51").get_Offset(row, column).Formula = C.StratLongText[TC.HandEVs[index].EVs.Strat[upcard]];
-                                        worksheet.get_Range("C51").get_Offset(row, column).Interior.Color = Information.RGB(ColorTable.C[TC.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[TC.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[TC.HandEVs[index].EVs.Strat[upcard]].B);
+                                        worksheet.Range("C51").Offset(row, column).SetExcelValue(C.StratLongText[TC.HandEVs[index].EVs.Strat[upcard]]);
+                                        worksheet.Range("C51").Offset(row, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[TC.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[TC.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[TC.HandEVs[index].EVs.Strat[upcard]].B);
                                     }
                                 }
                                 UndealPCard(card2);
@@ -10777,8 +10777,8 @@ namespace BJ_CA
                                     {
                                         column = upcard - 2;
                                     }
-                                    worksheet.get_Range("C90").get_Offset(card - 2, column).Formula = C.StratLongText[TC.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]];
-                                    worksheet.get_Range("C90").get_Offset(card - 2, column).Interior.Color = Information.RGB(ColorTable.C[TC.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].R, ColorTable.C[TC.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].G, ColorTable.C[TC.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].B);
+                                    worksheet.Range("C90").Offset(card - 2, column).SetExcelValue(C.StratLongText[TC.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]]);
+                                    worksheet.Range("C90").Offset(card - 2, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[TC.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].R, ColorTable.C[TC.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].G, ColorTable.C[TC.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].B);
                                 }
                             }
                             UndealPCard(card);
@@ -10807,8 +10807,8 @@ namespace BJ_CA
                             {
                                 column = upcard - 2;
                             }
-                            worksheet.get_Range("C102").get_Offset(card - 1, column).Formula = C.StratLongText[TC.HandEVs[index].EVs.Strat[upcard]];
-                            worksheet.get_Range("C102").get_Offset(card - 1, column).Interior.Color = Information.RGB(ColorTable.C[TC.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[TC.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[TC.HandEVs[index].EVs.Strat[upcard]].B);
+                            worksheet.Range("C102").Offset(card - 1, column).SetExcelValue(C.StratLongText[TC.HandEVs[index].EVs.Strat[upcard]]);
+                            worksheet.Range("C102").Offset(card - 1, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[TC.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[TC.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[TC.HandEVs[index].EVs.Strat[upcard]].B);
                         }
                     }
                 }
@@ -10828,8 +10828,8 @@ namespace BJ_CA
                             {
                                 column = upcard - 2;
                             }
-                            worksheet.get_Range("C115").get_Offset(Total - 4, column).Formula = C.StratLongText[TC.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]];
-                            worksheet.get_Range("C115").get_Offset(Total - 4, column).Interior.Color = Information.RGB(ColorTable.C[TC.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].R, ColorTable.C[TC.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].G, ColorTable.C[TC.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].B);
+                            worksheet.Range("C115").Offset(Total - 4, column).SetExcelValue(C.StratLongText[TC.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]]);
+                            worksheet.Range("C115").Offset(Total - 4, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[TC.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].R, ColorTable.C[TC.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].G, ColorTable.C[TC.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].B);
                         }
                     }
                 }
@@ -10849,8 +10849,8 @@ namespace BJ_CA
                             {
                                 column = upcard - 2;
                             }
-                            worksheet.get_Range("C136").get_Offset(Total - 12, column).Formula = C.StratLongText[TC.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]];
-                            worksheet.get_Range("C136").get_Offset(Total - 12, column).Interior.Color = Information.RGB(ColorTable.C[TC.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].R, ColorTable.C[TC.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].G, ColorTable.C[TC.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].B);
+                            worksheet.Range("C136").Offset(Total - 12, column).SetExcelValue(C.StratLongText[TC.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]]);
+                            worksheet.Range("C136").Offset(Total - 12, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[TC.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].R, ColorTable.C[TC.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].G, ColorTable.C[TC.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].B);
                         }
                     }
                 }
@@ -10890,8 +10890,8 @@ namespace BJ_CA
                                     {
                                         column = upcard - 2;
                                     }
-                                    worksheet.get_Range("C149").get_Offset(row, column).Formula = C.StratLongText[Opt.HandEVs[index].EVs.Strat[upcard]];
-                                    worksheet.get_Range("C149").get_Offset(row, column).Interior.Color = Information.RGB(ColorTable.C[Opt.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[Opt.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[Opt.HandEVs[index].EVs.Strat[upcard]].B);
+                                    worksheet.Range("C149").Offset(row, column).SetExcelValue(C.StratLongText[Opt.HandEVs[index].EVs.Strat[upcard]]);
+                                    worksheet.Range("C149").Offset(row, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[Opt.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[Opt.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[Opt.HandEVs[index].EVs.Strat[upcard]].B);
                                 }
                             }
                             UndealPCard(card2);
@@ -10927,8 +10927,8 @@ namespace BJ_CA
                                 {
                                     column = upcard - 2;
                                 }
-                                worksheet.get_Range("C188").get_Offset(card - 2, column).Formula = C.StratLongText[Opt.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]];
-                                worksheet.get_Range("C188").get_Offset(card - 2, column).Interior.Color = Information.RGB(ColorTable.C[Opt.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].R, ColorTable.C[Opt.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].G, ColorTable.C[Opt.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].B);
+                                worksheet.Range("C188").Offset(card - 2, column).SetExcelValue(C.StratLongText[Opt.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]]);
+                                worksheet.Range("C188").Offset(card - 2, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[Opt.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].R, ColorTable.C[Opt.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].G, ColorTable.C[Opt.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].B);
                             }
                         }
                         UndealPCard(card);
@@ -10957,8 +10957,8 @@ namespace BJ_CA
                         {
                             column = upcard - 2;
                         }
-                        worksheet.get_Range("C200").get_Offset(card - 1, column).Formula = C.StratLongText[Opt.HandEVs[index].EVs.Strat[upcard]];
-                        worksheet.get_Range("C200").get_Offset(card - 1, column).Interior.Color = Information.RGB(ColorTable.C[Opt.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[Opt.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[Opt.HandEVs[index].EVs.Strat[upcard]].B);
+                        worksheet.Range("C200").Offset(card - 1, column).SetExcelValue(C.StratLongText[Opt.HandEVs[index].EVs.Strat[upcard]]);
+                        worksheet.Range("C200").Offset(card - 1, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[Opt.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[Opt.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[Opt.HandEVs[index].EVs.Strat[upcard]].B);
                     }
                 }
             }
@@ -10999,8 +10999,8 @@ namespace BJ_CA
                                         {
                                             column = upcard - 2;
                                         }
-                                        worksheet.get_Range("C213").get_Offset(row, column).Formula = C.StratLongText[Forced.HandEVs[index].EVs.Strat[upcard]];
-                                        worksheet.get_Range("C213").get_Offset(row, column).Interior.Color = Information.RGB(ColorTable.C[Forced.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[Forced.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[Forced.HandEVs[index].EVs.Strat[upcard]].B);
+                                        worksheet.Range("C213").Offset(row, column).SetExcelValue(C.StratLongText[Forced.HandEVs[index].EVs.Strat[upcard]]);
+                                        worksheet.Range("C213").Offset(row, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[Forced.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[Forced.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[Forced.HandEVs[index].EVs.Strat[upcard]].B);
                                     }
                                 }
                                 UndealPCard(card2);
@@ -11036,8 +11036,8 @@ namespace BJ_CA
                                     {
                                         column = upcard - 2;
                                     }
-                                    worksheet.get_Range("C252").get_Offset(card - 2, column).Formula = C.StratLongText[Forced.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]];
-                                    worksheet.get_Range("C252").get_Offset(card - 2, column).Interior.Color = Information.RGB(ColorTable.C[Forced.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].R, ColorTable.C[Forced.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].G, ColorTable.C[Forced.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].B);
+                                    worksheet.Range("C252").Offset(card - 2, column).SetExcelValue(C.StratLongText[Forced.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]]);
+                                    worksheet.Range("C252").Offset(card - 2, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[Forced.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].R, ColorTable.C[Forced.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].G, ColorTable.C[Forced.HandEVs[PlayerHands[index].HitHand[card]].EVs.Strat[upcard]].B);
                                 }
                             }
                             UndealPCard(card);
@@ -11066,8 +11066,8 @@ namespace BJ_CA
                             {
                                 column = upcard - 2;
                             }
-                            worksheet.get_Range("C264").get_Offset(card - 1, column).Formula = C.StratLongText[Forced.HandEVs[index].EVs.Strat[upcard]];
-                            worksheet.get_Range("C264").get_Offset(card - 1, column).Interior.Color = Information.RGB(ColorTable.C[Forced.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[Forced.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[Forced.HandEVs[index].EVs.Strat[upcard]].B);
+                            worksheet.Range("C264").Offset(card - 1, column).SetExcelValue(C.StratLongText[Forced.HandEVs[index].EVs.Strat[upcard]]);
+                            worksheet.Range("C264").Offset(card - 1, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[Forced.HandEVs[index].EVs.Strat[upcard]].R, ColorTable.C[Forced.HandEVs[index].EVs.Strat[upcard]].G, ColorTable.C[Forced.HandEVs[index].EVs.Strat[upcard]].B);
                         }
                     }
                 }
@@ -11087,8 +11087,8 @@ namespace BJ_CA
                             {
                                 column = upcard - 2;
                             }
-                            worksheet.get_Range("C277").get_Offset(Total - 4, column).Formula = C.StratLongText[Forced.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]];
-                            worksheet.get_Range("C277").get_Offset(Total - 4, column).Interior.Color = Information.RGB(ColorTable.C[Forced.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].R, ColorTable.C[Forced.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].G, ColorTable.C[Forced.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].B);
+                            worksheet.Range("C277").Offset(Total - 4, column).SetExcelValue(C.StratLongText[Forced.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]]);
+                            worksheet.Range("C277").Offset(Total - 4, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[Forced.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].R, ColorTable.C[Forced.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].G, ColorTable.C[Forced.StratTD[Total, Conversions.ToInteger(false) + 1].Strat[upcard]].B);
                         }
                     }
                 }
@@ -11108,8 +11108,8 @@ namespace BJ_CA
                             {
                                 column = upcard - 2;
                             }
-                            worksheet.get_Range("C298").get_Offset(Total - 12, column).Formula = C.StratLongText[Forced.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]];
-                            worksheet.get_Range("C298").get_Offset(Total - 12, column).Interior.Color = Information.RGB(ColorTable.C[Forced.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].R, ColorTable.C[Forced.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].G, ColorTable.C[Forced.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].B);
+                            worksheet.Range("C298").Offset(Total - 12, column).SetExcelValue(C.StratLongText[Forced.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]]);
+                            worksheet.Range("C298").Offset(Total - 12, column).Style.Fill.BackgroundColor = XLColor.FromArgb(ColorTable.C[Forced.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].R, ColorTable.C[Forced.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].G, ColorTable.C[Forced.StratTD[Total, Conversions.ToInteger(true) + 1].Strat[upcard]].B);
                         }
                     }
                 }
@@ -11118,9 +11118,9 @@ namespace BJ_CA
             worksheet = null;
         }
 
-        private void PrintStrategyEVsExcel(Excel.Workbook workBook)
+        private void PrintStrategyEVsExcel(XLWorkbook workBook)
         {
-            Excel.Worksheet worksheet;
+            IXLWorksheet worksheet;
             int Total;
             int upcard;
             int card;
@@ -11132,16 +11132,15 @@ namespace BJ_CA
             double prob;
             double p2;
 
-            worksheet = (Excel.Worksheet)workBook.Worksheets["Strategy EVs"];
-            worksheet.Select();
+            worksheet = workBook.Worksheet("Strategy EVs");
 
-            worksheet.get_Range("D3:E3").ClearContents();
-            worksheet.get_Range("D8:M241").ClearContents();
-            worksheet.get_Range("D246:M375").ClearContents();
-            worksheet.get_Range("D380:M499").ClearContents();
-            worksheet.get_Range("D504:M791").ClearContents();
-            worksheet.get_Range("D796:M867").ClearContents();
-            worksheet.get_Range("A1").Select();
+            worksheet.Range("D3:E3").ClearContents();
+            worksheet.Range("D8:M241").ClearContents();
+            worksheet.Range("D246:M375").ClearContents();
+            worksheet.Range("D380:M499").ClearContents();
+            worksheet.Range("D504:M791").ClearContents();
+            worksheet.Range("D796:M867").ClearContents();
+            worksheet.Range("A1").SelectOnly();
 
             // Print Blackjack EVs
 
@@ -11157,9 +11156,9 @@ namespace BJ_CA
             UndealDCard(1);
             UndealDCard(10);
             UndealPCard(1);
-            worksheet.get_Range("D3").Formula = 2d * (dprob - prob);
-            worksheet.get_Range("E3").Formula = 2d * prob;
-            worksheet.get_Range("F3").Formula = 2d * dprob;
+            worksheet.Range("D3").SetExcelValue(2d * (dprob - prob));
+            worksheet.Range("E3").SetExcelValue(2d * prob);
+            worksheet.Range("F3").SetExcelValue(2d * dprob);
 
             // Print the remaining EVs
             for (upcard = 1; upcard <= 10; upcard++)
@@ -11178,31 +11177,31 @@ namespace BJ_CA
                     DealDCard(upcard);
 
                     // Print Total Dependent Hard Strategies
-                    worksheet.get_Range("D8").Select();
+                    worksheet.Range("D8").SelectOnly();
                     for (Total = 4; Total <= 21; Total++)
                     {
                         row = Total - 4;
                         if (TD.ComputeStrat)
                         {
-                            worksheet.get_Range("D8").get_Offset(row * 13, column).Formula = dprob * TD.StratTD[Total, Conversions.ToInteger(false) + 1].NetProb[upcard];
-                            worksheet.get_Range("D8").get_Offset(row * 13 + 1, column).Formula = TD.StratTD[Total, Conversions.ToInteger(false) + 1].StratStandEV[upcard];
-                            worksheet.get_Range("D8").get_Offset(row * 13 + 2, column).Formula = TD.StratTD[Total, Conversions.ToInteger(false) + 1].StratHitEV[upcard];
-                            worksheet.get_Range("D8").get_Offset(row * 13 + 3, column).Formula = TD.StratTD[Total, Conversions.ToInteger(false) + 1].StratDEV[upcard];
-                            worksheet.get_Range("D8").get_Offset(row * 13 + 4, column).Formula = TD.StratTD[Total, Conversions.ToInteger(false) + 1].StratSurrEV[upcard];
+                            worksheet.Range("D8").Offset(row * 13, column).SetExcelValue(dprob * TD.StratTD[Total, Conversions.ToInteger(false) + 1].NetProb[upcard]);
+                            worksheet.Range("D8").Offset(row * 13 + 1, column).SetExcelValue(TD.StratTD[Total, Conversions.ToInteger(false) + 1].StratStandEV[upcard]);
+                            worksheet.Range("D8").Offset(row * 13 + 2, column).SetExcelValue(TD.StratTD[Total, Conversions.ToInteger(false) + 1].StratHitEV[upcard]);
+                            worksheet.Range("D8").Offset(row * 13 + 3, column).SetExcelValue(TD.StratTD[Total, Conversions.ToInteger(false) + 1].StratDEV[upcard]);
+                            worksheet.Range("D8").Offset(row * 13 + 4, column).SetExcelValue(TD.StratTD[Total, Conversions.ToInteger(false) + 1].StratSurrEV[upcard]);
                         }
                         if (TC.ComputeStrat)
                         {
-                            worksheet.get_Range("D8").get_Offset(row * 13 + 5, column).Formula = TC.StratTD[Total, Conversions.ToInteger(false) + 1].StratStandEV[upcard];
-                            worksheet.get_Range("D8").get_Offset(row * 13 + 6, column).Formula = TC.StratTD[Total, Conversions.ToInteger(false) + 1].StratHitEV[upcard];
-                            worksheet.get_Range("D8").get_Offset(row * 13 + 7, column).Formula = TC.StratTD[Total, Conversions.ToInteger(false) + 1].StratDEV[upcard];
-                            worksheet.get_Range("D8").get_Offset(row * 13 + 8, column).Formula = TC.StratTD[Total, Conversions.ToInteger(false) + 1].StratSurrEV[upcard];
+                            worksheet.Range("D8").Offset(row * 13 + 5, column).SetExcelValue(TC.StratTD[Total, Conversions.ToInteger(false) + 1].StratStandEV[upcard]);
+                            worksheet.Range("D8").Offset(row * 13 + 6, column).SetExcelValue(TC.StratTD[Total, Conversions.ToInteger(false) + 1].StratHitEV[upcard]);
+                            worksheet.Range("D8").Offset(row * 13 + 7, column).SetExcelValue(TC.StratTD[Total, Conversions.ToInteger(false) + 1].StratDEV[upcard]);
+                            worksheet.Range("D8").Offset(row * 13 + 8, column).SetExcelValue(TC.StratTD[Total, Conversions.ToInteger(false) + 1].StratSurrEV[upcard]);
                         }
                         if (Forced.ComputeStrat)
                         {
-                            worksheet.get_Range("D8").get_Offset(row * 13 + 9, column).Formula = Forced.StratTD[Total, Conversions.ToInteger(false) + 1].StratStandEV[upcard];
-                            worksheet.get_Range("D8").get_Offset(row * 13 + 10, column).Formula = Forced.StratTD[Total, Conversions.ToInteger(false) + 1].StratHitEV[upcard];
-                            worksheet.get_Range("D8").get_Offset(row * 13 + 11, column).Formula = Forced.StratTD[Total, Conversions.ToInteger(false) + 1].StratDEV[upcard];
-                            worksheet.get_Range("D8").get_Offset(row * 13 + 12, column).Formula = Forced.StratTD[Total, Conversions.ToInteger(false) + 1].StratSurrEV[upcard];
+                            worksheet.Range("D8").Offset(row * 13 + 9, column).SetExcelValue(Forced.StratTD[Total, Conversions.ToInteger(false) + 1].StratStandEV[upcard]);
+                            worksheet.Range("D8").Offset(row * 13 + 10, column).SetExcelValue(Forced.StratTD[Total, Conversions.ToInteger(false) + 1].StratHitEV[upcard]);
+                            worksheet.Range("D8").Offset(row * 13 + 11, column).SetExcelValue(Forced.StratTD[Total, Conversions.ToInteger(false) + 1].StratDEV[upcard]);
+                            worksheet.Range("D8").Offset(row * 13 + 12, column).SetExcelValue(Forced.StratTD[Total, Conversions.ToInteger(false) + 1].StratSurrEV[upcard]);
                         }
                     }
 
@@ -11212,25 +11211,25 @@ namespace BJ_CA
                         row = Total - 12;
                         if (TD.ComputeStrat)
                         {
-                            worksheet.get_Range("D246").get_Offset(row * 13, column).Formula = dprob * TD.StratTD[Total, Conversions.ToInteger(true) + 1].NetProb[upcard];
-                            worksheet.get_Range("D246").get_Offset(row * 13 + 1, column).Formula = TD.StratTD[Total, Conversions.ToInteger(true) + 1].StratStandEV[upcard];
-                            worksheet.get_Range("D246").get_Offset(row * 13 + 2, column).Formula = TD.StratTD[Total, Conversions.ToInteger(true) + 1].StratHitEV[upcard];
-                            worksheet.get_Range("D246").get_Offset(row * 13 + 3, column).Formula = TD.StratTD[Total, Conversions.ToInteger(true) + 1].StratDEV[upcard];
-                            worksheet.get_Range("D246").get_Offset(row * 13 + 4, column).Formula = TD.StratTD[Total, Conversions.ToInteger(true) + 1].StratSurrEV[upcard];
+                            worksheet.Range("D246").Offset(row * 13, column).SetExcelValue(dprob * TD.StratTD[Total, Conversions.ToInteger(true) + 1].NetProb[upcard]);
+                            worksheet.Range("D246").Offset(row * 13 + 1, column).SetExcelValue(TD.StratTD[Total, Conversions.ToInteger(true) + 1].StratStandEV[upcard]);
+                            worksheet.Range("D246").Offset(row * 13 + 2, column).SetExcelValue(TD.StratTD[Total, Conversions.ToInteger(true) + 1].StratHitEV[upcard]);
+                            worksheet.Range("D246").Offset(row * 13 + 3, column).SetExcelValue(TD.StratTD[Total, Conversions.ToInteger(true) + 1].StratDEV[upcard]);
+                            worksheet.Range("D246").Offset(row * 13 + 4, column).SetExcelValue(TD.StratTD[Total, Conversions.ToInteger(true) + 1].StratSurrEV[upcard]);
                         }
                         if (TC.ComputeStrat)
                         {
-                            worksheet.get_Range("D246").get_Offset(row * 13 + 5, column).Formula = TC.StratTD[Total, Conversions.ToInteger(true) + 1].StratStandEV[upcard];
-                            worksheet.get_Range("D246").get_Offset(row * 13 + 6, column).Formula = TC.StratTD[Total, Conversions.ToInteger(true) + 1].StratHitEV[upcard];
-                            worksheet.get_Range("D246").get_Offset(row * 13 + 7, column).Formula = TC.StratTD[Total, Conversions.ToInteger(true) + 1].StratDEV[upcard];
-                            worksheet.get_Range("D246").get_Offset(row * 13 + 8, column).Formula = TC.StratTD[Total, Conversions.ToInteger(true) + 1].StratSurrEV[upcard];
+                            worksheet.Range("D246").Offset(row * 13 + 5, column).SetExcelValue(TC.StratTD[Total, Conversions.ToInteger(true) + 1].StratStandEV[upcard]);
+                            worksheet.Range("D246").Offset(row * 13 + 6, column).SetExcelValue(TC.StratTD[Total, Conversions.ToInteger(true) + 1].StratHitEV[upcard]);
+                            worksheet.Range("D246").Offset(row * 13 + 7, column).SetExcelValue(TC.StratTD[Total, Conversions.ToInteger(true) + 1].StratDEV[upcard]);
+                            worksheet.Range("D246").Offset(row * 13 + 8, column).SetExcelValue(TC.StratTD[Total, Conversions.ToInteger(true) + 1].StratSurrEV[upcard]);
                         }
                         if (Forced.ComputeStrat)
                         {
-                            worksheet.get_Range("D246").get_Offset(row * 13 + 9, column).Formula = Forced.StratTD[Total, Conversions.ToInteger(true) + 1].StratStandEV[upcard];
-                            worksheet.get_Range("D246").get_Offset(row * 13 + 10, column).Formula = Forced.StratTD[Total, Conversions.ToInteger(true) + 1].StratHitEV[upcard];
-                            worksheet.get_Range("D246").get_Offset(row * 13 + 11, column).Formula = Forced.StratTD[Total, Conversions.ToInteger(true) + 1].StratDEV[upcard];
-                            worksheet.get_Range("D246").get_Offset(row * 13 + 12, column).Formula = Forced.StratTD[Total, Conversions.ToInteger(true) + 1].StratSurrEV[upcard];
+                            worksheet.Range("D246").Offset(row * 13 + 9, column).SetExcelValue(Forced.StratTD[Total, Conversions.ToInteger(true) + 1].StratStandEV[upcard]);
+                            worksheet.Range("D246").Offset(row * 13 + 10, column).SetExcelValue(Forced.StratTD[Total, Conversions.ToInteger(true) + 1].StratHitEV[upcard]);
+                            worksheet.Range("D246").Offset(row * 13 + 11, column).SetExcelValue(Forced.StratTD[Total, Conversions.ToInteger(true) + 1].StratDEV[upcard]);
+                            worksheet.Range("D246").Offset(row * 13 + 12, column).SetExcelValue(Forced.StratTD[Total, Conversions.ToInteger(true) + 1].StratSurrEV[upcard]);
                         }
                     }
 
@@ -11248,30 +11247,30 @@ namespace BJ_CA
                                 DealPCard(card);
                                 index = FindPlayerHand(CurrentPHand);
                                 row = card - 1;
-                                worksheet.get_Range("D380").get_Offset(row * 12, column).Formula = prob;
+                                worksheet.Range("D380").Offset(row * 12, column).SetExcelValue(prob);
                                 if (SPL > 0)
                                 {
                                     if (SplitAllowed[card])
                                     {
                                         if (TD.ComputeStrat)
-                                            worksheet.get_Range("D380").get_Offset(row * 12 + 1, column).Formula = TD.HandEVs[index].SplitEV[upcard];
+                                            worksheet.Range("D380").Offset(row * 12 + 1, column).SetExcelValue(TD.HandEVs[index].SplitEV[upcard]);
                                         if (TC.ComputeStrat)
-                                            worksheet.get_Range("D380").get_Offset(row * 12 + 2, column).Formula = TC.HandEVs[index].SplitEV[upcard];
-                                        worksheet.get_Range("D380").get_Offset(row * 12 + 3, column).Formula = Opt.HandEVs[index].SplitEV[upcard];
+                                            worksheet.Range("D380").Offset(row * 12 + 2, column).SetExcelValue(TC.HandEVs[index].SplitEV[upcard]);
+                                        worksheet.Range("D380").Offset(row * 12 + 3, column).SetExcelValue(Opt.HandEVs[index].SplitEV[upcard]);
                                         if (Forced.ComputeStrat)
-                                            worksheet.get_Range("D380").get_Offset(row * 12 + 4, column).Formula = Forced.HandEVs[index].SplitEV[upcard];
+                                            worksheet.Range("D380").Offset(row * 12 + 4, column).SetExcelValue(Forced.HandEVs[index].SplitEV[upcard]);
                                     }
                                 }
-                                worksheet.get_Range("D380").get_Offset(row * 12 + 5, column).Formula = PlayerHands[index].HandEVs.StandEV[upcard];
-                                worksheet.get_Range("D380").get_Offset(row * 12 + 6, column).Formula = PlayerHands[index].HandEVs.DEV[upcard];
-                                worksheet.get_Range("D380").get_Offset(row * 12 + 7, column).Formula = PlayerHands[index].HandEVs.SurrEV[upcard];
+                                worksheet.Range("D380").Offset(row * 12 + 5, column).SetExcelValue(PlayerHands[index].HandEVs.StandEV[upcard]);
+                                worksheet.Range("D380").Offset(row * 12 + 6, column).SetExcelValue(PlayerHands[index].HandEVs.DEV[upcard]);
+                                worksheet.Range("D380").Offset(row * 12 + 7, column).SetExcelValue(PlayerHands[index].HandEVs.SurrEV[upcard]);
                                 if (TD.ComputeStrat)
-                                    worksheet.get_Range("D380").get_Offset(row * 12 + 8, column).Formula = TD.HandEVs[index].EVs.HitEV[upcard];
+                                    worksheet.Range("D380").Offset(row * 12 + 8, column).SetExcelValue(TD.HandEVs[index].EVs.HitEV[upcard]);
                                 if (TC.ComputeStrat)
-                                    worksheet.get_Range("D380").get_Offset(row * 12 + 9, column).Formula = TC.HandEVs[index].EVs.HitEV[upcard];
-                                worksheet.get_Range("D380").get_Offset(row * 12 + 10, column).Formula = Opt.HandEVs[index].EVs.HitEV[upcard];
+                                    worksheet.Range("D380").Offset(row * 12 + 9, column).SetExcelValue(TC.HandEVs[index].EVs.HitEV[upcard]);
+                                worksheet.Range("D380").Offset(row * 12 + 10, column).SetExcelValue(Opt.HandEVs[index].EVs.HitEV[upcard]);
                                 if (Forced.ComputeStrat)
-                                    worksheet.get_Range("D380").get_Offset(row * 12 + 11, column).Formula = Forced.HandEVs[index].EVs.HitEV[upcard];
+                                    worksheet.Range("D380").Offset(row * 12 + 11, column).SetExcelValue(Forced.HandEVs[index].EVs.HitEV[upcard]);
                                 UndealPCard(card);
                             }
                             UndealPCard(card);
@@ -11307,17 +11306,17 @@ namespace BJ_CA
                                     p2 = p2 * CardProb(card, upcard);
                                     DealPCard(card);
                                     index = FindPlayerHand(CurrentPHand);
-                                    worksheet.get_Range("D504").get_Offset(row * 8, column).Formula = prob + p2;
-                                    worksheet.get_Range("D504").get_Offset(row * 8 + 1, column).Formula = PlayerHands[index].HandEVs.StandEV[upcard];
-                                    worksheet.get_Range("D504").get_Offset(row * 8 + 2, column).Formula = PlayerHands[index].HandEVs.DEV[upcard];
-                                    worksheet.get_Range("D504").get_Offset(row * 8 + 3, column).Formula = PlayerHands[index].HandEVs.SurrEV[upcard];
+                                    worksheet.Range("D504").Offset(row * 8, column).SetExcelValue(prob + p2);
+                                    worksheet.Range("D504").Offset(row * 8 + 1, column).SetExcelValue(PlayerHands[index].HandEVs.StandEV[upcard]);
+                                    worksheet.Range("D504").Offset(row * 8 + 2, column).SetExcelValue(PlayerHands[index].HandEVs.DEV[upcard]);
+                                    worksheet.Range("D504").Offset(row * 8 + 3, column).SetExcelValue(PlayerHands[index].HandEVs.SurrEV[upcard]);
                                     if (TD.ComputeStrat)
-                                        worksheet.get_Range("D504").get_Offset(row * 8 + 4, column).Formula = TD.HandEVs[index].EVs.HitEV[upcard];
+                                        worksheet.Range("D504").Offset(row * 8 + 4, column).SetExcelValue(TD.HandEVs[index].EVs.HitEV[upcard]);
                                     if (TC.ComputeStrat)
-                                        worksheet.get_Range("D504").get_Offset(row * 8 + 5, column).Formula = TC.HandEVs[index].EVs.HitEV[upcard];
-                                    worksheet.get_Range("D504").get_Offset(row * 8 + 6, column).Formula = Opt.HandEVs[index].EVs.HitEV[upcard];
+                                        worksheet.Range("D504").Offset(row * 8 + 5, column).SetExcelValue(TC.HandEVs[index].EVs.HitEV[upcard]);
+                                    worksheet.Range("D504").Offset(row * 8 + 6, column).SetExcelValue(Opt.HandEVs[index].EVs.HitEV[upcard]);
                                     if (Forced.ComputeStrat)
-                                        worksheet.get_Range("D504").get_Offset(row * 8 + 7, column).Formula = Forced.HandEVs[index].EVs.HitEV[upcard];
+                                        worksheet.Range("D504").Offset(row * 8 + 7, column).SetExcelValue(Forced.HandEVs[index].EVs.HitEV[upcard]);
                                     UndealPCard(card2);
                                 }
                                 UndealPCard(card);
@@ -11347,17 +11346,17 @@ namespace BJ_CA
                                 DealPCard(1);
                                 index = FindPlayerHand(CurrentPHand);
                                 row = card - 2;
-                                worksheet.get_Range("D796").get_Offset(row * 8, column).Formula = prob + p2;
-                                worksheet.get_Range("D796").get_Offset(row * 8 + 1, column).Formula = PlayerHands[index].HandEVs.StandEV[upcard];
-                                worksheet.get_Range("D796").get_Offset(row * 8 + 2, column).Formula = PlayerHands[index].HandEVs.DEV[upcard];
-                                worksheet.get_Range("D796").get_Offset(row * 8 + 3, column).Formula = PlayerHands[index].HandEVs.SurrEV[upcard];
+                                worksheet.Range("D796").Offset(row * 8, column).SetExcelValue(prob + p2);
+                                worksheet.Range("D796").Offset(row * 8 + 1, column).SetExcelValue(PlayerHands[index].HandEVs.StandEV[upcard]);
+                                worksheet.Range("D796").Offset(row * 8 + 2, column).SetExcelValue(PlayerHands[index].HandEVs.DEV[upcard]);
+                                worksheet.Range("D796").Offset(row * 8 + 3, column).SetExcelValue(PlayerHands[index].HandEVs.SurrEV[upcard]);
                                 if (TD.ComputeStrat)
-                                    worksheet.get_Range("D796").get_Offset(row * 8 + 4, column).Formula = TD.HandEVs[index].EVs.HitEV[upcard];
+                                    worksheet.Range("D796").Offset(row * 8 + 4, column).SetExcelValue(TD.HandEVs[index].EVs.HitEV[upcard]);
                                 if (TC.ComputeStrat)
-                                    worksheet.get_Range("D796").get_Offset(row * 8 + 5, column).Formula = TC.HandEVs[index].EVs.HitEV[upcard];
-                                worksheet.get_Range("D796").get_Offset(row * 8 + 6, column).Formula = Opt.HandEVs[index].EVs.HitEV[upcard];
+                                    worksheet.Range("D796").Offset(row * 8 + 5, column).SetExcelValue(TC.HandEVs[index].EVs.HitEV[upcard]);
+                                worksheet.Range("D796").Offset(row * 8 + 6, column).SetExcelValue(Opt.HandEVs[index].EVs.HitEV[upcard]);
                                 if (Forced.ComputeStrat)
-                                    worksheet.get_Range("D796").get_Offset(row * 8 + 7, column).Formula = Forced.HandEVs[index].EVs.HitEV[upcard];
+                                    worksheet.Range("D796").Offset(row * 8 + 7, column).SetExcelValue(Forced.HandEVs[index].EVs.HitEV[upcard]);
                                 UndealPCard(card);
                                 prob = prob / CardProb(card, upcard);
                             }
@@ -11371,9 +11370,9 @@ namespace BJ_CA
             worksheet = null;
         }
 
-        private void PrintSplitEVsExcel(Excel.Workbook workBook)
+        private void PrintSplitEVsExcel(XLWorkbook workBook)
         {
-            Excel.Worksheet worksheet;
+            IXLWorksheet worksheet;
             int paircard;
             int upcard;
             int splits;
@@ -11381,14 +11380,13 @@ namespace BJ_CA
             int row;
             int index;
 
-            worksheet = (Excel.Worksheet)workBook.Worksheets["Split EVs"];
-            worksheet.Select();
+            worksheet = workBook.Worksheet("Split EVs");
 
-            worksheet.get_Range("C3:L32").ClearContents();
-            worksheet.get_Range("C36:L65").ClearContents();
-            worksheet.get_Range("C69:L98").ClearContents();
-            worksheet.get_Range("C102:L131").ClearContents();
-            worksheet.get_Range("A1").Select();
+            worksheet.Range("C3:L32").ClearContents();
+            worksheet.Range("C36:L65").ClearContents();
+            worksheet.Range("C69:L98").ClearContents();
+            worksheet.Range("C102:L131").ClearContents();
+            worksheet.Range("A1").SelectOnly();
 
             // Print Split EVs
             if (SPL > 0)
@@ -11420,12 +11418,12 @@ namespace BJ_CA
                                     for (splits = 1; splits <= loopTo; splits++)
                                     {
                                         if (TD.ComputeStrat)
-                                            worksheet.get_Range("C3").get_Offset(row + splits - 1, column).Formula = TD.HandEVs[index].SPLEV[upcard, splits];
-                                        worksheet.get_Range("C3").get_Offset(row + 33 + splits - 1, column).Formula = Opt.HandEVs[index].SPLEV[upcard, splits];
+                                            worksheet.Range("C3").Offset(row + splits - 1, column).SetExcelValue(TD.HandEVs[index].SPLEV[upcard, splits]);
+                                        worksheet.Range("C3").Offset(row + 33 + splits - 1, column).SetExcelValue(Opt.HandEVs[index].SPLEV[upcard, splits]);
                                         if (TC.ComputeStrat)
-                                            worksheet.get_Range("C3").get_Offset(row + 66 + splits - 1, column).Formula = TC.HandEVs[index].SPLEV[upcard, splits];
+                                            worksheet.Range("C3").Offset(row + 66 + splits - 1, column).SetExcelValue(TC.HandEVs[index].SPLEV[upcard, splits]);
                                         if (Forced.ComputeStrat)
-                                            worksheet.get_Range("C3").get_Offset(row + 99 + splits - 1, column).Formula = Forced.HandEVs[index].SPLEV[upcard, splits];
+                                            worksheet.Range("C3").Offset(row + 99 + splits - 1, column).SetExcelValue(Forced.HandEVs[index].SPLEV[upcard, splits]);
                                     }
                                 }
                             }
@@ -11439,28 +11437,27 @@ namespace BJ_CA
             worksheet = null;
         }
 
-        private void PrintGameEVsExcel(Excel.Workbook workBook)
+        private void PrintGameEVsExcel(XLWorkbook workBook)
         {
-            Excel.Worksheet worksheet;
+            IXLWorksheet worksheet;
             int column;
             int card;
             int upcard;
 
-            worksheet = (Excel.Worksheet)workBook.Worksheets["Summary"];
-            worksheet.Select();
+            worksheet = workBook.Worksheet("Summary");
 
-            worksheet.get_Range("C2:C5").ClearContents();
-            worksheet.get_Range("C8:L12").ClearContents();
-            worksheet.get_Range("C15:L19").ClearContents();
-            worksheet.get_Range("A1").Select();
+            worksheet.Range("C2:C5").ClearContents();
+            worksheet.Range("C8:L12").ClearContents();
+            worksheet.Range("C15:L19").ClearContents();
+            worksheet.Range("A1").SelectOnly();
 
             if (TD.ComputeStrat)
-                worksheet.get_Range("C2").Formula = TD.GameEVs.NetGameEV;
+                worksheet.Range("C2").SetExcelValue(TD.GameEVs.NetGameEV);
             if (TC.ComputeStrat)
-                worksheet.get_Range("C3").Formula = TC.GameEVs.NetGameEV;
-            worksheet.get_Range("C4").Formula = Opt.GameEVs.NetGameEV;
+                worksheet.Range("C3").SetExcelValue(TC.GameEVs.NetGameEV);
+            worksheet.Range("C4").SetExcelValue(Opt.GameEVs.NetGameEV);
             if (Forced.ComputeStrat)
-                worksheet.get_Range("C5").Formula = Forced.GameEVs.NetGameEV;
+                worksheet.Range("C5").SetExcelValue(Forced.GameEVs.NetGameEV);
 
             for (upcard = 1; upcard <= 10; upcard++)
             {
@@ -11474,14 +11471,14 @@ namespace BJ_CA
                     {
                         column = upcard - 2;
                     }
-                    worksheet.get_Range("C8").get_Offset(0, column).Formula = Opt.GameEVs.CardProbs[upcard];
+                    worksheet.Range("C8").Offset(0, column).SetExcelValue(Opt.GameEVs.CardProbs[upcard]);
                     if (TD.ComputeStrat)
-                        worksheet.get_Range("C8").get_Offset(1, column).Formula = TD.GameEVs.UpcardEVs[upcard];
+                        worksheet.Range("C8").Offset(1, column).SetExcelValue(TD.GameEVs.UpcardEVs[upcard]);
                     if (TC.ComputeStrat)
-                        worksheet.get_Range("C8").get_Offset(2, column).Formula = TC.GameEVs.UpcardEVs[upcard];
-                    worksheet.get_Range("C8").get_Offset(3, column).Formula = Opt.GameEVs.UpcardEVs[upcard];
+                        worksheet.Range("C8").Offset(2, column).SetExcelValue(TC.GameEVs.UpcardEVs[upcard]);
+                    worksheet.Range("C8").Offset(3, column).SetExcelValue(Opt.GameEVs.UpcardEVs[upcard]);
                     if (Forced.ComputeStrat)
-                        worksheet.get_Range("C8").get_Offset(4, column).Formula = Forced.GameEVs.UpcardEVs[upcard];
+                        worksheet.Range("C8").Offset(4, column).SetExcelValue(Forced.GameEVs.UpcardEVs[upcard]);
                 }
             }
 
@@ -11497,23 +11494,23 @@ namespace BJ_CA
                     {
                         column = card - 2;
                     }
-                    worksheet.get_Range("C15").get_Offset(0, column).Formula = Opt.GameEVs.CardProbs[card];
+                    worksheet.Range("C15").Offset(0, column).SetExcelValue(Opt.GameEVs.CardProbs[card]);
                     if (TD.ComputeStrat)
-                        worksheet.get_Range("C15").get_Offset(1, column).Formula = TD.GameEVs.FirstCardEVs[card];
+                        worksheet.Range("C15").Offset(1, column).SetExcelValue(TD.GameEVs.FirstCardEVs[card]);
                     if (TC.ComputeStrat)
-                        worksheet.get_Range("C15").get_Offset(2, column).Formula = TC.GameEVs.FirstCardEVs[card];
-                    worksheet.get_Range("C15").get_Offset(3, column).Formula = Opt.GameEVs.FirstCardEVs[card];
+                        worksheet.Range("C15").Offset(2, column).SetExcelValue(TC.GameEVs.FirstCardEVs[card]);
+                    worksheet.Range("C15").Offset(3, column).SetExcelValue(Opt.GameEVs.FirstCardEVs[card]);
                     if (Forced.ComputeStrat)
-                        worksheet.get_Range("C15").get_Offset(4, column).Formula = Forced.GameEVs.FirstCardEVs[card];
+                        worksheet.Range("C15").Offset(4, column).SetExcelValue(Forced.GameEVs.FirstCardEVs[card]);
                 }
             }
 
             worksheet = null;
         }
 
-        private void PrintExceptionsExcel(Excel.Workbook workBook)
+        private void PrintExceptionsExcel(XLWorkbook workBook)
         {
-            Excel.Worksheet worksheet;
+            IXLWorksheet worksheet;
             int index;
             int upcard;
             int card;
@@ -11529,9 +11526,8 @@ namespace BJ_CA
             int paircard;
             int hands;
 
-            worksheet = (Excel.Worksheet)workBook.Worksheets["Exceptions"];
-            worksheet.Select();
-            worksheet.get_Range("A6:R6").get_End(Excel.XlDirection.xlDown).ClearContents();
+            worksheet = workBook.Worksheet("Exceptions");
+            worksheet.Range("A6:R6").EndDown().ClearContents();
 
             if (TD.ComputeStrat)
             {
@@ -11648,25 +11644,25 @@ namespace BJ_CA
                                                 }
                                             }
 
-                                            worksheet.get_Range("A7").get_Offset(n, 0).Formula = handStr;
-                                            worksheet.get_Range("A7").get_Offset(n, 1).Formula = upcard;
-                                            worksheet.get_Range("A7").get_Offset(n, 2).Formula = Total;
-                                            worksheet.get_Range("A7").get_Offset(n, 3).Formula = Soft;
-                                            worksheet.get_Range("A7").get_Offset(n, 4).Formula = PlayerHands[index].Hand.NumCards;
-                                            worksheet.get_Range("A7").get_Offset(n, 5).Formula = "PreSplit";
-                                            worksheet.get_Range("A7").get_Offset(n, 6).Formula = "CD";
-                                            worksheet.get_Range("A7").get_Offset(n, 7).Formula = "TD";
+                                            worksheet.Range("A7").Offset(n, 0).SetExcelValue(handStr);
+                                            worksheet.Range("A7").Offset(n, 1).SetExcelValue(upcard);
+                                            worksheet.Range("A7").Offset(n, 2).SetExcelValue(Total);
+                                            worksheet.Range("A7").Offset(n, 3).SetExcelValue(Soft);
+                                            worksheet.Range("A7").Offset(n, 4).SetExcelValue(PlayerHands[index].Hand.NumCards);
+                                            worksheet.Range("A7").Offset(n, 5).SetExcelValue("PreSplit");
+                                            worksheet.Range("A7").Offset(n, 6).SetExcelValue("CD");
+                                            worksheet.Range("A7").Offset(n, 7).SetExcelValue("TD");
 
-                                            worksheet.get_Range("A7").get_Offset(n, 8).Formula = C.StratShortText[Opt.HandEVs[index].EVs.Strat[upcard]];
-                                            worksheet.get_Range("A7").get_Offset(n, 9).Formula = C.StratShortText[TD.StratTD[Total, Soft].Strat[upcard]];
-                                            worksheet.get_Range("A7").get_Offset(n, 10).Formula = PlayerHands[index].HandEVs.StandEV[upcard];
-                                            worksheet.get_Range("A7").get_Offset(n, 11).Formula = PlayerHands[index].HandEVs.StandEV[upcard];
-                                            worksheet.get_Range("A7").get_Offset(n, 12).Formula = PlayerHands[index].HandEVs.DEV[upcard];
-                                            worksheet.get_Range("A7").get_Offset(n, 13).Formula = PlayerHands[index].HandEVs.DEV[upcard];
-                                            worksheet.get_Range("A7").get_Offset(n, 14).Formula = Opt.HandEVs[index].EVs.HitEV[upcard];
-                                            worksheet.get_Range("A7").get_Offset(n, 15).Formula = TD.HandEVs[index].EVs.HitEV[upcard];
-                                            worksheet.get_Range("A7").get_Offset(n, 16).Formula = Opt.HandEVs[index].HandUsed[upcard] != 0;
-                                            worksheet.get_Range("A7").get_Offset(n, 17).Formula = TD.HandEVs[index].HandUsed[upcard] != 0;
+                                            worksheet.Range("A7").Offset(n, 8).SetExcelValue(C.StratShortText[Opt.HandEVs[index].EVs.Strat[upcard]]);
+                                            worksheet.Range("A7").Offset(n, 9).SetExcelValue(C.StratShortText[TD.StratTD[Total, Soft].Strat[upcard]]);
+                                            worksheet.Range("A7").Offset(n, 10).SetExcelValue(PlayerHands[index].HandEVs.StandEV[upcard]);
+                                            worksheet.Range("A7").Offset(n, 11).SetExcelValue(PlayerHands[index].HandEVs.StandEV[upcard]);
+                                            worksheet.Range("A7").Offset(n, 12).SetExcelValue(PlayerHands[index].HandEVs.DEV[upcard]);
+                                            worksheet.Range("A7").Offset(n, 13).SetExcelValue(PlayerHands[index].HandEVs.DEV[upcard]);
+                                            worksheet.Range("A7").Offset(n, 14).SetExcelValue(Opt.HandEVs[index].EVs.HitEV[upcard]);
+                                            worksheet.Range("A7").Offset(n, 15).SetExcelValue(TD.HandEVs[index].EVs.HitEV[upcard]);
+                                            worksheet.Range("A7").Offset(n, 16).SetExcelValue(Opt.HandEVs[index].HandUsed[upcard] != 0);
+                                            worksheet.Range("A7").Offset(n, 17).SetExcelValue(TD.HandEVs[index].HandUsed[upcard] != 0);
 
                                             n += 1;
                                         }
@@ -11831,25 +11827,25 @@ namespace BJ_CA
                                                                             }
                                                                         }
 
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 0).Formula = handStr;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 1).Formula = upcard;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 2).Formula = Total;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 3).Formula = Soft;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 4).Formula = PlayerHands[index].Hand.NumCards;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 5).Formula = Strings.Format(paircard) + "  " + NPxHands[hands].Name;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 6).Formula = "Post CD";
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 7).Formula = "TD";
+                                                                        worksheet.Range("A7").Offset(n + n2, 0).SetExcelValue(handStr);
+                                                                        worksheet.Range("A7").Offset(n + n2, 1).SetExcelValue(upcard);
+                                                                        worksheet.Range("A7").Offset(n + n2, 2).SetExcelValue(Total);
+                                                                        worksheet.Range("A7").Offset(n + n2, 3).SetExcelValue(Soft);
+                                                                        worksheet.Range("A7").Offset(n + n2, 4).SetExcelValue(PlayerHands[index].Hand.NumCards);
+                                                                        worksheet.Range("A7").Offset(n + n2, 5).SetExcelValue(Strings.Format(paircard) + "  " + NPxHands[hands].Name);
+                                                                        worksheet.Range("A7").Offset(n + n2, 6).SetExcelValue("Post CD");
+                                                                        worksheet.Range("A7").Offset(n + n2, 7).SetExcelValue("TD");
 
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 8).Formula = C.StratShortText[Opt.HandEVs[index].SplitData[PlayerHands[index].PairIndex[paircard], hands].Strat[upcard]];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 9).Formula = C.StratShortText[TD.StratTD[Total, Soft].Strat[upcard]];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 10).Formula = PlayerHands[index].SplitEVs[PlayerHands[index].PairIndex[paircard], hands].StandEV[upcard];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 11).Formula = PlayerHands[index].HandEVs.StandEV[upcard];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 12).Formula = PlayerHands[index].SplitEVs[PlayerHands[index].PairIndex[paircard], hands].DEV[upcard];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 13).Formula = PlayerHands[index].HandEVs.DEV[upcard];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 14).Formula = Opt.HandEVs[index].SplitData[PlayerHands[index].PairIndex[paircard], hands].HitEV[upcard];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 15).Formula = TD.HandEVs[index].EVs.HitEV[upcard];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 16).Formula = Opt.HandEVs[index].HandUsed[upcard] != 0;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2, 17).Formula = TD.HandEVs[index].HandUsed[upcard] != 0;
+                                                                        worksheet.Range("A7").Offset(n + n2, 8).SetExcelValue(C.StratShortText[Opt.HandEVs[index].SplitData[PlayerHands[index].PairIndex[paircard], hands].Strat[upcard]]);
+                                                                        worksheet.Range("A7").Offset(n + n2, 9).SetExcelValue(C.StratShortText[TD.StratTD[Total, Soft].Strat[upcard]]);
+                                                                        worksheet.Range("A7").Offset(n + n2, 10).SetExcelValue(PlayerHands[index].SplitEVs[PlayerHands[index].PairIndex[paircard], hands].StandEV[upcard]);
+                                                                        worksheet.Range("A7").Offset(n + n2, 11).SetExcelValue(PlayerHands[index].HandEVs.StandEV[upcard]);
+                                                                        worksheet.Range("A7").Offset(n + n2, 12).SetExcelValue(PlayerHands[index].SplitEVs[PlayerHands[index].PairIndex[paircard], hands].DEV[upcard]);
+                                                                        worksheet.Range("A7").Offset(n + n2, 13).SetExcelValue(PlayerHands[index].HandEVs.DEV[upcard]);
+                                                                        worksheet.Range("A7").Offset(n + n2, 14).SetExcelValue(Opt.HandEVs[index].SplitData[PlayerHands[index].PairIndex[paircard], hands].HitEV[upcard]);
+                                                                        worksheet.Range("A7").Offset(n + n2, 15).SetExcelValue(TD.HandEVs[index].EVs.HitEV[upcard]);
+                                                                        worksheet.Range("A7").Offset(n + n2, 16).SetExcelValue(Opt.HandEVs[index].HandUsed[upcard] != 0);
+                                                                        worksheet.Range("A7").Offset(n + n2, 17).SetExcelValue(TD.HandEVs[index].HandUsed[upcard] != 0);
 
                                                                         n2 += 1;
                                                                     }
@@ -11918,25 +11914,25 @@ namespace BJ_CA
                                                                             }
                                                                         }
 
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 0).Formula = handStr;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 1).Formula = upcard;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 2).Formula = PlayerHands[index].Hand.Total;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 3).Formula = PlayerHands[index].Hand.Soft;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 4).Formula = PlayerHands[index].Hand.NumCards;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 5).Formula = Strings.Format(paircard) + "  " + NPxHands[hands].Name;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 6).Formula = "Post CD";
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 7).Formula = "CD";
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 0).SetExcelValue(handStr);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 1).SetExcelValue(upcard);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 2).SetExcelValue(PlayerHands[index].Hand.Total);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 3).SetExcelValue(PlayerHands[index].Hand.Soft);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 4).SetExcelValue(PlayerHands[index].Hand.NumCards);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 5).SetExcelValue(Strings.Format(paircard) + "  " + NPxHands[hands].Name);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 6).SetExcelValue("Post CD");
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 7).SetExcelValue("CD");
 
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 8).Formula = C.StratShortText[Opt.HandEVs[index].SplitData[PlayerHands[index].PairIndex[paircard], hands].Strat[upcard]];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 9).Formula = C.StratShortText[Opt.HandEVs[index].EVs.Strat[upcard]];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 10).Formula = PlayerHands[index].SplitEVs[PlayerHands[index].PairIndex[paircard], hands].StandEV[upcard];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 11).Formula = PlayerHands[index].HandEVs.StandEV[upcard];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 12).Formula = PlayerHands[index].SplitEVs[PlayerHands[index].PairIndex[paircard], hands].DEV[upcard];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 13).Formula = PlayerHands[index].HandEVs.DEV[upcard];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 14).Formula = Opt.HandEVs[index].SplitData[PlayerHands[index].PairIndex[paircard], hands].HitEV[upcard];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 15).Formula = Opt.HandEVs[index].EVs.HitEV[upcard];
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 16).Formula = Opt.HandEVs[index].HandUsed[upcard] != 0;
-                                                                        worksheet.get_Range("A7").get_Offset(n + n2 + n3, 17).Formula = TD.HandEVs[index].HandUsed[upcard] != 0;
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 8).SetExcelValue(C.StratShortText[Opt.HandEVs[index].SplitData[PlayerHands[index].PairIndex[paircard], hands].Strat[upcard]]);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 9).SetExcelValue(C.StratShortText[Opt.HandEVs[index].EVs.Strat[upcard]]);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 10).SetExcelValue(PlayerHands[index].SplitEVs[PlayerHands[index].PairIndex[paircard], hands].StandEV[upcard]);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 11).SetExcelValue(PlayerHands[index].HandEVs.StandEV[upcard]);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 12).SetExcelValue(PlayerHands[index].SplitEVs[PlayerHands[index].PairIndex[paircard], hands].DEV[upcard]);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 13).SetExcelValue(PlayerHands[index].HandEVs.DEV[upcard]);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 14).SetExcelValue(Opt.HandEVs[index].SplitData[PlayerHands[index].PairIndex[paircard], hands].HitEV[upcard]);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 15).SetExcelValue(Opt.HandEVs[index].EVs.HitEV[upcard]);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 16).SetExcelValue(Opt.HandEVs[index].HandUsed[upcard] != 0);
+                                                                        worksheet.Range("A7").Offset(n + n2 + n3, 17).SetExcelValue(TD.HandEVs[index].HandUsed[upcard] != 0);
 
                                                                         n3 += 1;
                                                                     }
@@ -11956,11 +11952,11 @@ namespace BJ_CA
                     }
                 }
 
-                worksheet.get_Range("B1").Formula = n;
-                worksheet.get_Range("B2").Formula = n2;
-                worksheet.get_Range("B3").Formula = n3;
+                worksheet.Range("B1").SetExcelValue(n);
+                worksheet.Range("B2").SetExcelValue(n2);
+                worksheet.Range("B3").SetExcelValue(n3);
                 if (n == 0 & n2 == 0 & n3 == 0)
-                    worksheet.get_Range("A7").Formula = "No Exceptions Found";
+                    worksheet.Range("A7").SetExcelValue("No Exceptions Found");
 
                 // worksheet.Range("A6:R6").End(Excel.XlDirection.xlDown). _
                 // Sort(Key1:=worksheet.Range("R6"), Order1:=Excel.XlSortOrder.xlDescending, _
@@ -11969,136 +11965,134 @@ namespace BJ_CA
                 // Header:=Excel.XlYesNoGuess.xlGuess, OrderCustom:=1, MatchCase:=False, _
                 // Orientation:=Excel.XlSortOrientation.xlSortRows)
 
-                worksheet.get_Range("A1").Select();
+                worksheet.Range("A1").SelectOnly();
 
             }
 
             worksheet = null;
         }
 
-        private void PrintRulesExcel(Excel.Workbook workBook)
+        private void PrintRulesExcel(XLWorkbook workBook)
         {
-            Excel.Worksheet worksheet;
+            IXLWorksheet worksheet;
             int card;
             int row;
 
-            worksheet = (Excel.Worksheet)workBook.Worksheets["Rules"];
-            worksheet.Select();
+            worksheet = workBook.Worksheet("Rules");
 
-            worksheet.get_Range("B1:B29").ClearContents();
-            worksheet.get_Range("E2:N6").ClearContents();
-            worksheet.get_Range("E11:N11").ClearContents();
-            worksheet.get_Range("E16:E21").ClearContents();
-            worksheet.get_Range("B1").Select();
+            worksheet.Range("B1:B29").ClearContents();
+            worksheet.Range("E2:N6").ClearContents();
+            worksheet.Range("E11:N11").ClearContents();
+            worksheet.Range("E16:E21").ClearContents();
+            worksheet.Range("B1").SelectOnly();
 
-            worksheet.get_Range("B1").Formula = DeckType;
+            worksheet.Range("B1").SetExcelValue(DeckType);
 
             for (card = 1; card <= 10; card++)
             {
-                worksheet.get_Range("E2").get_Offset(0, card - 1).Formula = OriginalShoe.Cards[card];
-                worksheet.get_Range("E2").get_Offset(1, card - 1).Formula = OriginalShoe.Suits[card, 0];
-                worksheet.get_Range("E2").get_Offset(2, card - 1).Formula = OriginalShoe.Suits[card, 1];
-                worksheet.get_Range("E2").get_Offset(3, card - 1).Formula = OriginalShoe.Suits[card, 2];
-                worksheet.get_Range("E2").get_Offset(4, card - 1).Formula = OriginalShoe.Suits[card, 3];
+                worksheet.Range("E2").Offset(0, card - 1).SetExcelValue(OriginalShoe.Cards[card]);
+                worksheet.Range("E2").Offset(1, card - 1).SetExcelValue(OriginalShoe.Suits[card, 0]);
+                worksheet.Range("E2").Offset(2, card - 1).SetExcelValue(OriginalShoe.Suits[card, 1]);
+                worksheet.Range("E2").Offset(3, card - 1).SetExcelValue(OriginalShoe.Suits[card, 2]);
+                worksheet.Range("E2").Offset(4, card - 1).SetExcelValue(OriginalShoe.Suits[card, 3]);
             }
 
             if (StandOnSoft == 17)
             {
-                worksheet.get_Range("B2").Formula = "S17";
+                worksheet.Range("B2").SetExcelValue("S17");
             }
             else
             {
-                worksheet.get_Range("B2").Formula = "H17";
+                worksheet.Range("B2").SetExcelValue("H17");
             }
 
             if (ENHC)
             {
-                worksheet.get_Range("B3").Formula = "ENHC";
+                worksheet.Range("B3").SetExcelValue("ENHC");
             }
             else if (BBO)
             {
-                worksheet.get_Range("B3").Formula = "BBO";
+                worksheet.Range("B3").SetExcelValue("BBO");
             }
             else if (OBBO)
             {
-                worksheet.get_Range("B3").Formula = "OBBO";
+                worksheet.Range("B3").SetExcelValue("OBBO");
             }
             else if (AOBBO)
             {
-                worksheet.get_Range("B3").Formula = "AOBBO";
+                worksheet.Range("B3").SetExcelValue("AOBBO");
             }
             else
             {
-                worksheet.get_Range("B3").Formula = "OBO";
+                worksheet.Range("B3").SetExcelValue("OBO");
             }
 
-            worksheet.get_Range("B4").Formula = DoubleType;
-            worksheet.get_Range("B14").Formula = DAN;
+            worksheet.Range("B4").SetExcelValue(DoubleType);
+            worksheet.Range("B14").SetExcelValue(DAN);
 
-            worksheet.get_Range("B5").Formula = DAS;
+            worksheet.Range("B5").SetExcelValue(DAS);
 
-            worksheet.get_Range("B6").Formula = SurrType;
-            worksheet.get_Range("B19").Formula = SAN;
+            worksheet.Range("B6").SetExcelValue(SurrType);
+            worksheet.Range("B19").SetExcelValue(SAN);
 
-            worksheet.get_Range("B7").Formula = "SPL" + SPL.ToString();
-            worksheet.get_Range("B8").Formula = BJPays;
+            worksheet.Range("B7").SetExcelValue("SPL" + SPL.ToString());
+            worksheet.Range("B8").SetExcelValue(BJPays);
 
-            worksheet.get_Range("B10").Formula = SMA;
-            worksheet.get_Range("B11").Formula = HSA;
-            worksheet.get_Range("B12").Formula = DSA;
-            worksheet.get_Range("B13").Formula = SSA;
+            worksheet.Range("B10").SetExcelValue(SMA);
+            worksheet.Range("B11").SetExcelValue(HSA);
+            worksheet.Range("B12").SetExcelValue(DSA);
+            worksheet.Range("B13").SetExcelValue(SSA);
 
             if (DSoftAllHard)
             {
-                worksheet.get_Range("B16").Formula = "All";
+                worksheet.Range("B16").SetExcelValue("All");
             }
             else if (DSoft19Hard)
             {
-                worksheet.get_Range("B16").Formula = "19 Only";
+                worksheet.Range("B16").SetExcelValue("19 Only");
             }
             else
             {
-                worksheet.get_Range("B16").Formula = "False";
+                worksheet.Range("B16").SetExcelValue("False");
             }
 
-            worksheet.get_Range("B18").Formula = SurrPays;
-            worksheet.get_Range("B20").Formula = SurrDBJPays;
-            worksheet.get_Range("B21").Formula = MacauType;
-            worksheet.get_Range("B22").Formula = SAS;
+            worksheet.Range("B18").SetExcelValue(SurrPays);
+            worksheet.Range("B20").SetExcelValue(SurrDBJPays);
+            worksheet.Range("B21").SetExcelValue(MacauType);
+            worksheet.Range("B22").SetExcelValue(SAS);
 
             if (CDP)
             {
-                worksheet.get_Range("B24").Formula = "CDP";
+                worksheet.Range("B24").SetExcelValue("CDP");
             }
             else if (CDPN)
             {
-                worksheet.get_Range("B24").Formula = "CDPN";
+                worksheet.Range("B24").SetExcelValue("CDPN");
             }
             else
             {
-                worksheet.get_Range("B24").Formula = "CDZ-";
+                worksheet.Range("B24").SetExcelValue("CDZ-");
             }
 
-            worksheet.get_Range("B25").Formula = BJSplitAces;
-            worksheet.get_Range("B26").Formula = BJSplitTens;
+            worksheet.Range("B25").SetExcelValue(BJSplitAces);
+            worksheet.Range("B26").SetExcelValue(BJSplitTens);
 
-            worksheet.get_Range("B28").Formula = CheckTen;
-            worksheet.get_Range("B29").Formula = CheckAce;
+            worksheet.Range("B28").SetExcelValue(CheckTen);
+            worksheet.Range("B29").SetExcelValue(CheckAce);
 
             for (card = 1; card <= 10; card++)
-                worksheet.get_Range("E11").get_Offset(0, card - 1).Formula = SplitAllowed[card];
+                worksheet.Range("E11").Offset(0, card - 1).SetExcelValue(SplitAllowed[card]);
 
             for (card = 17; card <= 22; card++)
-                worksheet.get_Range("E16").get_Offset(card - 17, 0).Formula = PDTies[card];
+                worksheet.Range("E16").Offset(card - 17, 0).SetExcelValue(PDTies[card]);
 
             worksheet = null;
 
-            worksheet = (Excel.Worksheet)workBook.Worksheets["Special Rules"];
-            worksheet.Select();
+            worksheet = workBook.Worksheet("Special Rules");
 
-            worksheet.get_Range("A2").get_End(Excel.XlDirection.xlDown).ClearContents();
-            worksheet.get_Range("C2").get_End(Excel.XlDirection.xlDown).ClearContents();
-            worksheet.get_Range("A1").Select();
+            worksheet.Range("A2").EndDown().ClearContents();
+            worksheet.Range("C2").EndDown().ClearContents();
+            worksheet.Range("A1").SelectOnly();
 
             row = 0;
             var loopTo = BonusRulesList.NumRules - 1;
@@ -12106,13 +12100,13 @@ namespace BJ_CA
             {
                 if (BonusRulesList.L[card].RuleOn)
                 {
-                    worksheet.get_Range("A2").get_Offset(row, 0).Formula = BonusRulesList.L[card].Name;
+                    worksheet.Range("A2").Offset(row, 0).SetExcelValue(BonusRulesList.L[card].Name);
                     row += 1;
                 }
             }
             if (row == 0)
             {
-                worksheet.get_Range("A2").Formula = "None";
+                worksheet.Range("A2").SetExcelValue("None");
             }
 
             row = 0;
@@ -12121,7 +12115,7 @@ namespace BJ_CA
             {
                 if (ForcedTableRulesList.L[card].RuleOn)
                 {
-                    worksheet.get_Range("C2").get_Offset(row, 0).Formula = ForcedTableRulesList.L[card].Name;
+                    worksheet.Range("C2").Offset(row, 0).SetExcelValue(ForcedTableRulesList.L[card].Name);
                     row += 1;
                 }
             }
@@ -12130,13 +12124,13 @@ namespace BJ_CA
             {
                 if (ForcedRulesList.L[card].RuleOn)
                 {
-                    worksheet.get_Range("C2").get_Offset(row, 0).Formula = ForcedRulesList.L[card].Name;
+                    worksheet.Range("C2").Offset(row, 0).SetExcelValue(ForcedRulesList.L[card].Name);
                     row += 1;
                 }
             }
             if (row == 0)
             {
-                worksheet.get_Range("C2").Formula = "None";
+                worksheet.Range("C2").SetExcelValue("None");
             }
 
             worksheet = null;

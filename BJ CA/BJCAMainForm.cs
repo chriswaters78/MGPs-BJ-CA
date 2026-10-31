@@ -15091,7 +15091,7 @@ namespace BJ_CA
                 withBlock.SaveDPDictionary = FormRules.General.SaveDPDictionary;
 
                 withBlock.OutputPath = FormRules.FileNames.OutputPath;
-                withBlock.ExcelFilePath = GetPath(INIPath) + "MGPs BJ CA Results.xls";
+                withBlock.ExcelFilePath = GetPath(INIPath) + "MGPs BJ CA Results.xlsx";
                 withBlock.ProbsPath = ProbsPath;
 
             }

@@ -10,7 +10,8 @@ MGP
 The application is a C# Windows Forms project targeting .NET 10 (Windows only). It was converted from the
 original VB.NET (.NET Framework 3.5) source, which is in the git history before this change.
 
-Requirements: the .NET 10 SDK. Microsoft Excel is only needed for "Send Results to Excel".
+Requirements: the .NET 10 SDK. Microsoft Excel is not needed: "Send Results to Excel" writes an `.xlsx` file with
+[ClosedXML](https://github.com/ClosedXML/ClosedXML) and opens it in whatever program handles `.xlsx` files.
 
 ```
 dotnet build "BJ CA.sln"
@@ -23,7 +24,7 @@ The build copies the files the application uses into the output folder (`BJ CA\b
 
 - `BJCA.ini` – the default rule settings (Options > Set Defaults rewrites it)
 - `DealerProbs *.dat` – cached dealer probabilities (Options > Update Dealer Probs File adds to them)
-- `MGPs BJ CA Results.xls` – the workbook "Send Results to Excel" fills in
+- `MGPs BJ CA Results.xlsx` – the template "Send Results to Excel" fills in and saves under the name you choose
 - `MGP's BJ CA Help.pdf`
 
 These start from the copies in `BJ CA\Data` and the project folder. Once the application has changed them in the

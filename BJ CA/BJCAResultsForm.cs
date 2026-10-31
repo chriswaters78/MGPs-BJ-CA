@@ -23098,10 +23098,30 @@ namespace BJ_CA
 
         private void PrintToExelButtonSummTab_Click(object sender, EventArgs e)
         {
-            if (Interaction.MsgBox("Output details to Excel?", MsgBoxStyle.YesNo) == MsgBoxResult.Yes)
+            var sfd = new SaveFileDialog();
+
+            sfd.Title = "Output details to Excel";
+            sfd.OverwritePrompt = true;
+            sfd.CheckPathExists = true;
+            sfd.AddExtension = true;
+            sfd.DefaultExt = ".xlsx";
+            sfd.FileName = "MGPs BJ CA Results.xlsx";
+            sfd.InitialDirectory = Filenames.DefaultPath;
+            sfd.Filter = "Excel Workbook (*.xlsx)|*.xlsx";
+            sfd.ValidateNames = true;
+            if (sfd.ShowDialog() == DialogResult.OK)
             {
-                Results.PrintToExcel();
+                try
+                {
+                    Results.PrintToExcel(sfd.FileName);
+                    Process.Start(new ProcessStartInfo(sfd.FileName) { UseShellExecute = true });
+                }
+                catch (Exception ex)
+                {
+                    Interaction.MsgBox("The results could not be written to " + GetFileName(sfd.FileName) + ":" + "\r" + ex.Message);
+                }
             }
+            sfd.Dispose();
         }
 
         #endregion
