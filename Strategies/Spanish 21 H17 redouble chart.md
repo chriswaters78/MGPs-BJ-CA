@@ -4,10 +4,10 @@
 
 | Strategy | EV |
 |---|---|
-| Composition dependent | -0.4108% |
-| 2-card dependent | -0.4175% |
-| Total dependent | -0.4299% |
-| This chart | -0.4111% |
+| Composition dependent | -0.4182% |
+| 2-card dependent | -0.4257% |
+| Total dependent | -0.4452% |
+| This chart | -0.4192% |
 
 | Hard | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | T | A |
 |---|---|---|---|---|---|---|---|---|---|---|

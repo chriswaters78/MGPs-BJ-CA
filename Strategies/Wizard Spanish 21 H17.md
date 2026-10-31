@@ -6,10 +6,10 @@ From https://wizardofodds.com/games/spanish-21/ ("Dealer Hits on Soft 17").
 
 | Strategy | EV |
 |---|---|
-| Composition dependent | -0.7707% |
-| 2-card dependent | -0.7798% |
-| Total dependent | -0.7934% |
-| This chart | -0.7709% |
+| Composition dependent | -0.7781% |
+| 2-card dependent | -0.7880% |
+| Total dependent | -0.8087% |
+| This chart | -0.7791% |
 
 | Hard | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | T | A |
 |---|---|---|---|---|---|---|---|---|---|---|
