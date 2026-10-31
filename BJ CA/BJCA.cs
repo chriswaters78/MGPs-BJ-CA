@@ -9394,10 +9394,18 @@ namespace BJ_CA
                                     }
                                     index = FindPlayerHand(CurrentPHand);
 
-                                    if (PlayerHands[index].SuitedBonusEVs is null)
-                                    {
-                                        bjev = PlayerHands[index].HandEVs.BJStandEV[upcard];
+                                    // bjadjprob is only non-zero when the dealer checks for blackjack, and then a dealer blackjack
+                                    // ends the round before the player acts, so neither the play nor the suits change this.
+                                    bjev = PlayerHands[index].HandEVs.BJStandEV[upcard];
 
+                                    if (PlayerHands[index].SuitedBonusEVs is not null & ReferenceEquals(cStrat, Opt))
+                                    {
+                                        // Opt plays a hand that can still make a suited bonus by its suits.
+                                        // Bonus EVs are already included in the SuitedNetEV
+                                        cev = PlayerHands[index].SuitedBonusEVs.SuitedNetEV[upcard];
+                                    }
+                                    else
+                                    {
                                         switch (cStrat.HandEVs[index].EVs.Strat[upcard])
                                         {
                                             case (int)BJCAGlobalsClass.Strat.S:
@@ -9440,12 +9448,20 @@ namespace BJ_CA
                                         }
                                         // Bonus EVs of 2 card hands need to be added here
                                         cev += PlayerHands[index].HandEVs.BonusEV[upcard];
-                                    }
-                                    else
-                                    {
-                                        // Bonus EVs are already included in the SuitedNetEV
-                                        bjev = PlayerHands[index].SuitedBonusEVs.SuitedNetBJEV[upcard];
-                                        cev = PlayerHands[index].SuitedBonusEVs.SuitedNetEV[upcard];
+
+                                        // The other strategies can't see suits, so a hand that can still make a suited bonus plays
+                                        // the strategy's play. A hit gets the suited bonus's extra: by suit, the suited hit EV less
+                                        // Opt's hit EV, which differ only by the suited bonus hand the hit can make.
+                                        if (PlayerHands[index].SuitedBonusEVs is not null & cStrat.HandEVs[index].EVs.Strat[upcard] == (int)BJCAGlobalsClass.Strat.H)
+                                        {
+                                            for (int suit = 0; suit <= 3; suit++)
+                                            {
+                                                if (PlayerHands[index].HandEVs.SuitedPossible[upcard, suit])
+                                                {
+                                                    cev += PlayerHands[index].HandEVs.ProbSuited[upcard, suit] / PlayerHands[index].HandEVs.Prob[upcard] * (PlayerHands[index].SuitedBonusEVs.SuitedHitEV[upcard, suit] - Opt.HandEVs[index].EVs.HitEV[upcard]);
+                                                }
+                                            }
+                                        }
                                     }
 
                                     cStrat.GameEVs.NetGameEV += prob * ((1d - bjadjprob) * cev + bjadjprob * bjev);
