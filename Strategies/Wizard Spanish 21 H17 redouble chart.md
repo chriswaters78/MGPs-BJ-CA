@@ -8,7 +8,7 @@ From https://wizardofodds.com/games/spanish-21/ ("Double Double Down, Dealer Hit
 |---|---|
 | Composition dependent | -0.4182% |
 | 2-card dependent | -0.4257% |
-| Total dependent | -0.4452% |
+| Total dependent | -0.4453% |
 | This chart | -0.4210% |
 
 | Hard | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | T | A |

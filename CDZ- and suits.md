@@ -104,7 +104,8 @@ payout is added.
 
 `e3b90e6` ("CDZ- and the simulator read the suits of a bonus start, and every split path pays suited bonuses")
 plays 6,7, 6,8, 7,8 and 7,7 by suit case, and where no bonus is paid on split hands, plays those split hands as a
-start of mixed suits. Rerun against MGP's BJ CA at `6c24a72` (with the suited-bonus fixes), both to six decimals.
+start of mixed suits. Rerun against MGP's BJ CA with the suited-bonus fixes and the up-card suit fix below, both to
+six decimals.
 
 Test game, as above (no 7-7-7, no bonuses on split hands):
 
@@ -112,26 +113,39 @@ Test game, as above (no 7-7-7, no bonuses on split hands):
 |---|---|---|---|
 | 5/6/7-card 21 only | −0.961219% | −0.961219% | |
 | + 6-7-8 3:2 | −0.828448% | −0.828448% | |
-| + one suit 2:1 | −0.819304% (+0.009144) | −0.819329% (+0.009119) | +0.0077 |
-| + spades 3:1 | −0.814635% (+0.004669) | −0.814673% (+0.004656) | +0.0035 |
+| + one suit 2:1 | −0.819329% (+0.009119) | −0.819329% (+0.009119) | +0.0077 |
+| + spades 3:1 | −0.814673% (+0.004656) | −0.814673% (+0.004656) | +0.0035 |
 | 7,7 v 3 split, without → with the suited payout | −17.023% → −17.023% | −17.023% → −17.023% | −17.023% → −17.875% |
 | 8,8 v 3 split, without → with the suited payout | −0.201% → −0.201% | −0.201% → −0.201% | −0.201% → −1.039% |
 
 Both points in the summary are resolved: CDZ- now takes the full value of the suited payouts (CDP1 gives the
-same steps), and adding the suited payout no longer changes the split hands.
+same steps), and adding the suited payout no longer changes the split hands. The two analysers now agree exactly.
 
 Full presets (every bonus but the super bonus):
 
 | Game | MGP CD | CDZ- | CDP1 | CDZ- − MGP |
 |---|---|---|---|---|
-| H17, no bonuses on split hands | −0.802067% | −0.802106% | −0.799380% | −0.000039% |
-| H17, bonuses on split hands | −0.778132% | −0.776829% | −0.776781% | +0.001303% |
-| H17 two redoubles, no bonuses on split hands | −0.440594% | −0.440618% | −0.438207% | −0.000024% |
-| H17 two redoubles, bonuses on split hands | −0.418174% | −0.416852% | −0.416765% | +0.001322% |
+| H17, no bonuses on split hands | −0.802106% | −0.802106% | −0.799380% | 0.000000% |
+| H17, bonuses on split hands | −0.778170% | −0.776829% | −0.776781% | +0.001341% |
+| H17 two redoubles, no bonuses on split hands | −0.440632% | −0.440618% | −0.438207% | +0.000014% |
+| H17 two redoubles, bonuses on split hands | −0.418212% | −0.416852% | −0.416765% | +0.001360% |
 
-- **Same bonuses on both sides:** with no bonuses on split hands the two analysers agree to within 0.00004%, the
-  same small difference as in the suited steps above. MGP is the higher of the two there, although the analyser
-  also reads the up-card's suit; which side is right at that size hasn't been looked into.
 - **Bonuses on split hands:** MGP pays the ordinary bonuses on split hands but not the suited and spades payouts.
-  The analyser now pays them, worth about 0.0013% a round, which is the whole gap. Before the fix the gap was
-  0.0007%, because CDZ- missing the value of reading suits hid part of it.
+  The analyser now pays them, worth about 0.0013% a round, which is almost all of the gap.
+- **Redoubling, 0.000014%:** this comes from split hands, not suits: 8,8 v 8 split is −4.5558% in both analysers
+  without redoubling, but allowing redoubles lowers MGP's to −4.5838% while the analyser's is unchanged (2,2 and
+  3,3 v 4 and 3,3 v 8 move by much less). An added option shouldn't lower the best play's value, which points to
+  MGP's redoubling on split hands. Not yet looked into further.
+
+### MGP's up-card suit fix
+
+The first rerun had MGP about 0.00004% higher than CDZ- in the games with no bonuses on split hands, all of it
+from two starts: 6,8 v 7 and 6,7 v 8, where the card the hand needs has the up-card's rank. MGP's suited step
+there was exactly 24/23 of the analyser's.
+
+MGP deals the up-card off its rank but not off any suit, as its suit isn't known, then priced a suited hand's
+third card of that rank as `Suits / Cards`: holding 6♠8♠ against a 7, 6/23 of the remaining 7s, as if no 7♠
+could be the up-card. The up-card is a 7♠ a quarter of the time, so the exact share is 5.75/23 (1/4). MGP now uses
+`Suits / (Cards + 1)` for the up-card's rank (`BJCA.cs`, `ComputeSuitedBonusHitStratHand`). The hand's own suited
+chance already allowed for the up-card. The fix also moves Australian Pontoon's CD from −0.4190% to −0.4197%,
+more than Spanish 21 because Pontoon pays the 7-7-7 super bonus, and 7,7 v 7 is exactly the case this fix changes.
