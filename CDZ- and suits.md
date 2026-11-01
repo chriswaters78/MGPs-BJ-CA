@@ -104,8 +104,7 @@ payout is added.
 
 `e3b90e6` ("CDZ- and the simulator read the suits of a bonus start, and every split path pays suited bonuses")
 plays 6,7, 6,8, 7,8 and 7,7 by suit case, and where no bonus is paid on split hands, plays those split hands as a
-start of mixed suits. Rerun against MGP's BJ CA with the suited-bonus fixes and the up-card suit fix below, both to
-six decimals.
+start of mixed suits. Rerun against MGP's BJ CA with the suited-bonus fixes and the two MGP fixes below, both to six decimals.
 
 Test game, as above (no 7-7-7, no bonuses on split hands):
 
@@ -127,15 +126,12 @@ Full presets (every bonus but the super bonus):
 |---|---|---|---|---|
 | H17, no bonuses on split hands | −0.802106% | −0.802106% | −0.799380% | 0.000000% |
 | H17, bonuses on split hands | −0.778170% | −0.776829% | −0.776781% | +0.001341% |
-| H17 two redoubles, no bonuses on split hands | −0.440632% | −0.440618% | −0.438207% | +0.000014% |
-| H17 two redoubles, bonuses on split hands | −0.418212% | −0.416852% | −0.416765% | +0.001360% |
+| H17 two redoubles, no bonuses on split hands | −0.440618% | −0.440618% | −0.438207% | 0.000000% |
+| H17 two redoubles, bonuses on split hands | −0.418194% | −0.416852% | −0.416765% | +0.001342% |
 
-- **Bonuses on split hands:** MGP pays the ordinary bonuses on split hands but not the suited and spades payouts.
-  The analyser now pays them, worth about 0.0013% a round, which is almost all of the gap.
-- **Redoubling, 0.000014%:** this comes from split hands, not suits: 8,8 v 8 split is −4.5558% in both analysers
-  without redoubling, but allowing redoubles lowers MGP's to −4.5838% while the analyser's is unchanged (2,2 and
-  3,3 v 4 and 3,3 v 8 move by much less). An added option shouldn't lower the best play's value, which points to
-  MGP's redoubling on split hands. Not yet looked into further.
+Where both pay the same bonuses (no bonuses on split hands) the two analysers now agree exactly. With bonuses on
+split hands MGP pays the ordinary bonuses but not the suited and spades payouts; the analyser pays them, worth
+0.0013% a round, which is the whole remaining gap, the same with and without redoubling.
 
 ### MGP's up-card suit fix
 
@@ -149,3 +145,22 @@ could be the up-card. The up-card is a 7♠ a quarter of the time, so the exact 
 `Suits / (Cards + 1)` for the up-card's rank (`BJCA.cs`, `ComputeSuitedBonusHitStratHand`). The hand's own suited
 chance already allowed for the up-card. The fix also moves Australian Pontoon's CD from −0.4190% to −0.4197%,
 more than Spanish 21 because Pontoon pays the 7-7-7 super bonus, and 7,7 v 7 is exactly the case this fix changes.
+
+### MGP's after-double play on split hands
+
+The rerun after the up-card fix left MGP 0.000014% below CDZ- in the redoubling game, all of it from split hands
+(mostly 8,8 v 8, a little on 2,2 and 3,3). 8,8 v 8 split was −4.5558% in both analysers without redoubling, but
+allowing redoubles lowered MGP's to −4.5838%.
+
+After a split, MGP played a doubled hand by its pre-split after-double play (`DStrat`), chosen for the hand's cards
+alone. 8,3 doubled then an ace, 12 v 8, redoubles unsplit (−0.4995 of the stake against −0.5000 for the rescue).
+In the 8,8 split, with fewer 8s left, the redouble is worth −0.5072, but MGP still redoubled. Without redoubling the
+hand was rescued, so adding the option lowered the split's value. The analyser chooses the play for the split
+hand's own cards, so its 8,8 v 8 is the same with or without redoubling.
+
+MGP now does the same: a doubled split hand takes the best of standing, rescuing and redoubling (where the rules
+allow each), worked out for the split's cards (`ComputeSplitDoubleCardEV`). That matches its note that redoubles
+and the rescue are always played optimally. Past the redouble limit, a hand whose best play would be a redouble now
+takes the better of standing and rescuing; before, it always stood. The redoubling game takes about 20% longer.
+The Wizard's and the derived redouble charts' TD goes back to −0.4452%; their CD and chart figures don't change at
+four decimals.

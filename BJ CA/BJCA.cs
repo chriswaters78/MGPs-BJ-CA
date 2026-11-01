@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using static BJ_CA.BJCAShared;
@@ -3044,7 +3044,12 @@ namespace BJ_CA
             strat = PlayerHands[index].HandEVs.DStrat[upcard];
             if (strat == (int)BJCAGlobalsClass.Strat.D & depth > RDDepth)
             {
+                // Past the limit the hand takes the better of standing and rescuing, not always standing
                 strat = (int)BJCAGlobalsClass.Strat.S;
+                if (DDR && (DDRType == (int)BJCAGlobalsClass.Surr.ES ? SurrPays : PlayerHands[index].HandEVs.SurrEV[upcard]) > PlayerHands[index].HandEVs.StandEV[upcard])
+                {
+                    strat = (int)BJCAGlobalsClass.Strat.R;
+                }
             }
 
             switch (strat)
@@ -7888,92 +7893,107 @@ namespace BJ_CA
 
         private BJCAHandEVsClass ComputeSplitDoubleCardEV(int index, int upcard, int depth)
         {
-            int strat;
+            BJCAHandEVsClass newEVs;
+            BJCAHandEVsClass tempEVs;
+
+            // This function is only needed for RDA and DDR post-split
+            // The CurrentShoe hand has the hand needed to calculate the necessary EVs.
+
+            // A hand the pre-split rules can't redouble or rescue (no DStrat) stands. Otherwise the hand plays
+            // the best of standing, rescuing and redoubling for the split's own cards: the pre-split DStrat
+            // is chosen for the hand's cards alone, and the cards of the other split hands can change it.
+            newEVs = ComputeSplitDoubleStandEV(index, upcard);
+            if (PlayerHands[index].HandEVs.DStrat[upcard] == 0)
+                return newEVs;
+
+            if (RDA & RDAPS & depth <= RDDepth)
+            {
+                tempEVs = ComputeSplitRedoubleEV(index, upcard, depth);
+                if (tempEVs.DStratEV[upcard] > newEVs.DStratEV[upcard])
+                    newEVs = tempEVs;
+            }
+
+            if (DDR & DDRPS)
+            {
+                tempEVs = ComputeSplitRescueEV(upcard);
+                if (tempEVs.DStratEV[upcard] > newEVs.DStratEV[upcard])
+                    newEVs = tempEVs;
+            }
+
+            return newEVs;
+        }
+
+        private BJCAHandEVsClass ComputeSplitRedoubleEV(int index, int upcard, int depth)
+        {
             int card;
             double prob;
             double EV;
             double push;
             int newIndex;
-            var tempEVs = new BJCAHandEVsClass();
+            BJCAHandEVsClass tempEVs;
             var newEVs = new BJCAHandEVsClass();
 
-            // This function is only needed for RDA and DDR post-split
-            // The CurrentShoe hand has the hand needed to calculate the necessary EVs.
-
-            // The RDA and DDR Strategy will be the same as the PreSplit strategy so we only need to calculate the relevant EV
-            strat = PlayerHands[index].HandEVs.DStrat[upcard];
-            if (strat == (int)BJCAGlobalsClass.Strat.D & (!RDAPS | depth > RDDepth))
+            EV = 0d;
+            push = 0d;
+            for (card = 1; card <= 10; card++)
             {
-                strat = (int)BJCAGlobalsClass.Strat.S;
-            }
-            if (strat == (int)BJCAGlobalsClass.Strat.R & !DDRPS)
-            {
-                strat = (int)BJCAGlobalsClass.Strat.S;
-            }
-
-            switch (strat)
-            {
-                case (int)BJCAGlobalsClass.Strat.D:
+                prob = CardProb(card, 0);
+                if (prob > 0d)
+                {
+                    newIndex = PlayerHands[index].HitHand[card];
+                    if (newIndex > 0)
                     {
-                        EV = 0d;
+                        DealPCard(card);
+                        tempEVs = ComputeSplitDoubleCardEV(newIndex, upcard, depth + 1);
+                        EV = tempEVs.DStratEV[upcard];
+                        push = tempEVs.DStratPushEV[upcard];
+                        UndealPCard(card);
+                    }
+                    else
+                    {
+                        EV = -1;
                         push = 0d;
-                        for (card = 1; card <= 10; card++)
-                        {
-                            prob = CardProb(card, 0);
-                            if (prob > 0d)
-                            {
-                                newIndex = PlayerHands[index].HitHand[card];
-                                if (newIndex > 0)
-                                {
-                                    DealPCard(card);
-                                    tempEVs = ComputeSplitDoubleCardEV(newIndex, upcard, depth + 1);
-                                    EV = tempEVs.DStratEV[upcard];
-                                    push = tempEVs.DStratPushEV[upcard];
-                                    UndealPCard(card);
-                                }
-                                else
-                                {
-                                    EV = -1;
-                                    push = 0d;
-                                }
-                            }
-                            newEVs.DStratEV[upcard] += 2d * EV * prob;
-                            newEVs.DStratPushEV[upcard] += 2d * push * prob;
-                        }
-
-                        break;
                     }
-                case (int)BJCAGlobalsClass.Strat.R:
-                    {
-                        tempEVs.Empty();
-                        tempEVs = ComputeSurrenderHand(CurrentShoe.Hand, DDRType, upcard);
-                        newEVs.DStratEV[upcard] = tempEVs.SurrEV[upcard];
-                        newEVs.DStratPushEV[upcard] = 0d;
-                        if ((BBO | OBBO | AOBBO) & DDRType == (int)BJCAGlobalsClass.Surr.ES & (upcard == 1 & !CheckAce | upcard == 10 & !CheckTen))
-                        {
-                            // Let the calling function know the hand was resolved before the BJ check
-                            newEVs.BJStandEV[upcard] = 1d;
-                        }   // Stand
+                }
+                newEVs.DStratEV[upcard] += 2d * EV * prob;
+                newEVs.DStratPushEV[upcard] += 2d * push * prob;
+            }
 
-                        break;
-                    }
+            return newEVs;
+        }
 
-                default:
-                    {
-                        CurrentShoe.Undeal(upcard);
-                        CurrentShoe.Hand.Total = CurrentPHand.Total;
-                        tempEVs = ComputeStandHand(CurrentShoe.Hand, upcard, upcard, false);
-                        newEVs.DStratEV[upcard] = tempEVs.StandEV[upcard];
-                        newEVs.DStratPushEV[upcard] = tempEVs.StandPushEV[upcard];
-                        CurrentShoe.Deal(upcard);
-                        if ((BBO | OBBO | AOBBO) & PlayerHands[index].Hand.Total == 21 & P21AutoWin & (upcard == 1 & !CheckAce | upcard == 10 & !CheckTen))
-                        {
-                            // Let the calling function know the hand was resolved before the BJ check
-                            newEVs.BJStandEV[upcard] = 1d;
-                        }
+        private BJCAHandEVsClass ComputeSplitRescueEV(int upcard)
+        {
+            BJCAHandEVsClass tempEVs;
+            var newEVs = new BJCAHandEVsClass();
 
-                        break;
-                    }
+            tempEVs = ComputeSurrenderHand(CurrentShoe.Hand, DDRType, upcard);
+            newEVs.DStratEV[upcard] = tempEVs.SurrEV[upcard];
+            newEVs.DStratPushEV[upcard] = 0d;
+            if ((BBO | OBBO | AOBBO) & DDRType == (int)BJCAGlobalsClass.Surr.ES & (upcard == 1 & !CheckAce | upcard == 10 & !CheckTen))
+            {
+                // Let the calling function know the hand was resolved before the BJ check
+                newEVs.BJStandEV[upcard] = 1d;
+            }
+
+            return newEVs;
+        }
+
+        private BJCAHandEVsClass ComputeSplitDoubleStandEV(int index, int upcard)
+        {
+            BJCAHandEVsClass tempEVs;
+            var newEVs = new BJCAHandEVsClass();
+
+            CurrentShoe.Undeal(upcard);
+            CurrentShoe.Hand.Total = CurrentPHand.Total;
+            tempEVs = ComputeSplitStandHand(CurrentShoe.Hand, upcard);
+            newEVs.DStratEV[upcard] = tempEVs.StandEV[upcard];
+            newEVs.DStratPushEV[upcard] = tempEVs.StandPushEV[upcard];
+            CurrentShoe.Deal(upcard);
+            if ((BBO | OBBO | AOBBO) & PlayerHands[index].Hand.Total == 21 & P21AutoWin & (upcard == 1 & !CheckAce | upcard == 10 & !CheckTen))
+            {
+                // Let the calling function know the hand was resolved before the BJ check
+                newEVs.BJStandEV[upcard] = 1d;
             }
 
             return newEVs;
