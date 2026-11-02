@@ -2270,7 +2270,11 @@ Imports BJ_CA.BJCAShared
         'Here we limit the amount of redoubling allowed
         strat = PlayerHands(index).HandEVs.DStrat(upcard)
         If strat = BJCAGlobalsClass.Strat.D And depth > RDDepth Then
+            'Past the limit the hand takes the better of standing and rescuing, not always standing
             strat = BJCAGlobalsClass.Strat.S
+            If DDR AndAlso If(DDRType = C.Surr.ES, SurrPays, PlayerHands(index).HandEVs.SurrEV(upcard)) > PlayerHands(index).HandEVs.StandEV(upcard) Then
+                strat = BJCAGlobalsClass.Strat.R
+            End If
         End If
 
         Select Case strat
@@ -5994,70 +5998,99 @@ Imports BJ_CA.BJCAShared
     End Sub
 
     Private Function ComputeSplitDoubleCardEV(ByVal index As Integer, ByVal upcard As Integer, ByVal depth As Integer) As BJCAHandEVsClass
-        Dim strat As Integer
+        Dim newEVs As BJCAHandEVsClass
+        Dim tempEVs As BJCAHandEVsClass
+
+        'This function is only needed for RDA and DDR post-split
+        'The CurrentShoe hand has the hand needed to calculate the necessary EVs.
+
+        'A hand the pre-split rules can't redouble or rescue (no DStrat) stands. Otherwise the hand plays
+        '   the best of standing, rescuing and redoubling for the split's own cards: the pre-split DStrat
+        '   is chosen for the hand's cards alone, and the cards of the other split hands can change it.
+        newEVs = ComputeSplitDoubleStandEV(index, upcard)
+        If PlayerHands(index).HandEVs.DStrat(upcard) = 0 Then
+            Return newEVs
+        End If
+
+        If RDA And RDAPS And depth <= RDDepth Then
+            tempEVs = ComputeSplitRedoubleEV(index, upcard, depth)
+            If tempEVs.DStratEV(upcard) > newEVs.DStratEV(upcard) Then
+                newEVs = tempEVs
+            End If
+        End If
+
+        If DDR And DDRPS Then
+            tempEVs = ComputeSplitRescueEV(upcard)
+            If tempEVs.DStratEV(upcard) > newEVs.DStratEV(upcard) Then
+                newEVs = tempEVs
+            End If
+        End If
+
+        Return newEVs
+    End Function
+
+    Private Function ComputeSplitRedoubleEV(ByVal index As Integer, ByVal upcard As Integer, ByVal depth As Integer) As BJCAHandEVsClass
         Dim card As Integer
         Dim prob As Double
         Dim EV As Double
         Dim push As Double
         Dim newIndex As Integer
-        Dim tempEVs As New BJCAHandEVsClass
+        Dim tempEVs As BJCAHandEVsClass
         Dim newEVs As New BJCAHandEVsClass
 
-        'This function is only needed for RDA and DDR post-split
-        'The CurrentShoe hand has the hand needed to calculate the necessary EVs.
-
-        'The RDA and DDR Strategy will be the same as the PreSplit strategy so we only need to calculate the relevant EV
-        strat = PlayerHands(index).HandEVs.DStrat(upcard)
-        If strat = BJCAGlobalsClass.Strat.D And (Not RDAPS Or depth > RDDepth) Then
-            strat = BJCAGlobalsClass.Strat.S
-        End If
-        If strat = BJCAGlobalsClass.Strat.R And Not DDRPS Then
-            strat = BJCAGlobalsClass.Strat.S
-        End If
-
-        Select Case strat
-            Case BJCAGlobalsClass.Strat.D
-                EV = 0
-                push = 0
-                For card = 1 To 10
-                    prob = CardProb(card, 0)
-                    If prob > 0 Then
-                        newIndex = PlayerHands(index).HitHand(card)
-                        If newIndex > 0 Then
-                            DealPCard(card)
-                            tempEVs = ComputeSplitDoubleCardEV(newIndex, upcard, depth + 1)
-                            EV = tempEVs.DStratEV(upcard)
-                            push = tempEVs.DStratPushEV(upcard)
-                            UndealPCard(card)
-                        Else
-                            EV = -1
-                            push = 0
-                        End If
-                    End If
-                    newEVs.DStratEV(upcard) += 2 * EV * prob
-                    newEVs.DStratPushEV(upcard) += 2 * push * prob
-                Next card
-            Case BJCAGlobalsClass.Strat.R
-                tempEVs.Empty()
-                tempEVs = ComputeSurrenderHand(CurrentShoe.Hand, DDRType, upcard)
-                newEVs.DStratEV(upcard) = tempEVs.SurrEV(upcard)
-                newEVs.DStratPushEV(upcard) = 0
-                If (BBO Or OBBO Or AOBBO) And DDRType = C.Surr.ES And ((upcard = 1 And Not CheckAce) Or (upcard = 10 And Not CheckTen)) Then
-                    'Let the calling function know the hand was resolved before the BJ check
-                    newEVs.BJStandEV(upcard) = 1
+        EV = 0
+        push = 0
+        For card = 1 To 10
+            prob = CardProb(card, 0)
+            If prob > 0 Then
+                newIndex = PlayerHands(index).HitHand(card)
+                If newIndex > 0 Then
+                    DealPCard(card)
+                    tempEVs = ComputeSplitDoubleCardEV(newIndex, upcard, depth + 1)
+                    EV = tempEVs.DStratEV(upcard)
+                    push = tempEVs.DStratPushEV(upcard)
+                    UndealPCard(card)
+                Else
+                    EV = -1
+                    push = 0
                 End If
-            Case Else   'Stand
-                CurrentShoe.Undeal(upcard)
-                CurrentShoe.Hand.Total = CurrentPHand.Total
-                tempEVs = ComputeStandHand(CurrentShoe.Hand, upcard, upcard, False)
-                newEVs.DStratEV(upcard) = tempEVs.StandEV(upcard)
-                newEVs.DStratPushEV(upcard) = tempEVs.StandPushEV(upcard)
-                CurrentShoe.Deal(upcard)
-                If (BBO Or OBBO Or AOBBO) And PlayerHands(index).Hand.Total = 21 And P21AutoWin And ((upcard = 1 And Not CheckAce) Or (upcard = 10 And Not CheckTen)) Then
-                    'Let the calling function know the hand was resolved before the BJ check
-                    newEVs.BJStandEV(upcard) = 1
-                End If
-        End Select
+            End If
+            newEVs.DStratEV(upcard) += 2 * EV * prob
+            newEVs.DStratPushEV(upcard) += 2 * push * prob
+        Next card
+
+        Return newEVs
+    End Function
+
+    Private Function ComputeSplitRescueEV(ByVal upcard As Integer) As BJCAHandEVsClass
+        Dim tempEVs As BJCAHandEVsClass
+        Dim newEVs As New BJCAHandEVsClass
+
+        tempEVs = ComputeSurrenderHand(CurrentShoe.Hand, DDRType, upcard)
+        newEVs.DStratEV(upcard) = tempEVs.SurrEV(upcard)
+        newEVs.DStratPushEV(upcard) = 0
+        If (BBO Or OBBO Or AOBBO) And DDRType = C.Surr.ES And ((upcard = 1 And Not CheckAce) Or (upcard = 10 And Not CheckTen)) Then
+            'Let the calling function know the hand was resolved before the BJ check
+            newEVs.BJStandEV(upcard) = 1
+        End If
+
+        Return newEVs
+    End Function
+
+    Private Function ComputeSplitDoubleStandEV(ByVal index As Integer, ByVal upcard As Integer) As BJCAHandEVsClass
+        Dim tempEVs As BJCAHandEVsClass
+        Dim newEVs As New BJCAHandEVsClass
+
+        CurrentShoe.Undeal(upcard)
+        CurrentShoe.Hand.Total = CurrentPHand.Total
+        tempEVs = ComputeStandHand(CurrentShoe.Hand, upcard, upcard, False)
+        newEVs.DStratEV(upcard) = tempEVs.StandEV(upcard)
+        newEVs.DStratPushEV(upcard) = tempEVs.StandPushEV(upcard)
+        CurrentShoe.Deal(upcard)
+        If (BBO Or OBBO Or AOBBO) And PlayerHands(index).Hand.Total = 21 And P21AutoWin And ((upcard = 1 And Not CheckAce) Or (upcard = 10 And Not CheckTen)) Then
+            'Let the calling function know the hand was resolved before the BJ check
+            newEVs.BJStandEV(upcard) = 1
+        End If
 
         Return newEVs
     End Function
