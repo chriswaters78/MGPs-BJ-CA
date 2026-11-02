@@ -632,7 +632,7 @@ Public Class BJCARealtimeForm
 
             Rules.SPL = 1
             tempCA2.BJCA(Rules, DealerProbsRT)
-            SPL1Estimate = OriginalEV - tempCA.Opt.GameEVs.NetGameEV
+            SPL1Estimate = OriginalEV - tempCA2.Opt.GameEVs.NetGameEV
             Rules.SPL = OriginalSPL
         End If
 

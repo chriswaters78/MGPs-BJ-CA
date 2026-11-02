@@ -211,7 +211,7 @@
                     Cards(7) >= hand.Cards(7) And _
                     Cards(8) >= hand.Cards(8) And _
                     Cards(9) >= hand.Cards(9) And _
-                    Cards(10) >= hand.Cards(0)
+                    Cards(10) >= hand.Cards(10)
     End Function
 
 End Class

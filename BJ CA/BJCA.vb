@@ -4352,11 +4352,11 @@ Imports BJ_CA.BJCAShared
                                                 Opt.HandEVs(index).SplitData(PlayerHands(index).PairIndex(paircard), SplitCalcHands(hands)).StratEV(upcard) = PlayerHands(index).SplitEVs(PlayerHands(index).PairIndex(paircard), SplitCalcHands(hands)).SurrEV(upcard)
                                                 Opt.HandEVs(index).SplitData(PlayerHands(index).PairIndex(paircard), SplitCalcHands(hands)).StratPushEV(upcard) = 0
                                             End If
-
-                                            temphand.Cards(paircard) -= (NPxHands(SplitCalcHands(hands)).NP + 1)
-                                            temphand.NumCards -= (NPxHands(SplitCalcHands(hands)).NP + 1)
                                         End If
                                     Next upcard
+
+                                    temphand.Cards(paircard) -= (NPxHands(SplitCalcHands(hands)).NP + 1)
+                                    temphand.NumCards -= (NPxHands(SplitCalcHands(hands)).NP + 1)
                                 End If
                             Next hands
 
@@ -6129,7 +6129,7 @@ Imports BJ_CA.BJCAShared
                     End If
                 End If
                 strat = cStrat.HandEVs(newIndex).EVs.Strat(upcard)
-                If strat = BJCAGlobalsClass.Strat.H Or strat = BJCAGlobalsClass.Strat.P Or strat = BJCAGlobalsClass.Strat.PH Or (strat = BJCAGlobalsClass.Strat.D And Not cStrat.HandEVs(newIndex).DPreallowed(upcard)) Or (strat = BJCAGlobalsClass.Strat.R And Not cStrat.HandEVs(newIndex).RPreallowed(upcard)) Then
+                If strat = BJCAGlobalsClass.Strat.H Or strat = BJCAGlobalsClass.Strat.P Or strat = BJCAGlobalsClass.Strat.PH Or (strat = BJCAGlobalsClass.Strat.D And Not cStrat.HandEVs(newIndex).DPreallowed(upcard)) Or (strat = BJCAGlobalsClass.Strat.R And cStrat.HandEVs(newIndex).RPreallowed(upcard) = BJCAGlobalsClass.Surr.NS) Then
                     Call HandsUsed(cStrat, upcard, newIndex, stratIndex)
                 End If
                 UndealPCard(card)
@@ -7222,7 +7222,7 @@ Imports BJ_CA.BJCAShared
                                                     tdstrat = BJCAGlobalsClass.Strat.S
                                             End Select
                                         End If
-                                        If Not TD.HandEVs(index).RPreallowed(upcard) Then
+                                        If TD.HandEVs(index).RPreallowed(upcard) = BJCAGlobalsClass.Surr.NS Then
                                             Select Case tdstrat
                                                 Case BJCAGlobalsClass.Strat.R
                                                     tdstrat = BJCAGlobalsClass.Strat.H
@@ -7294,7 +7294,7 @@ Imports BJ_CA.BJCAShared
                                                         tdstrat = BJCAGlobalsClass.Strat.S
                                                 End Select
                                             End If
-                                            If Not Forced.HandEVs(index).RPreallowed(upcard) Then
+                                            If Forced.HandEVs(index).RPreallowed(upcard) = BJCAGlobalsClass.Surr.NS Then
                                                 Select Case tdstrat
                                                     Case BJCAGlobalsClass.Strat.R
                                                         tdstrat = BJCAGlobalsClass.Strat.H
@@ -7381,7 +7381,7 @@ Imports BJ_CA.BJCAShared
                                                                             tdstrat = BJCAGlobalsClass.Strat.S
                                                                     End Select
                                                                 End If
-                                                                If Not TD.HandEVs(index).RPostallowed(upcard) Then
+                                                                If TD.HandEVs(index).RPostallowed(upcard) = BJCAGlobalsClass.Surr.NS Then
                                                                     Select Case tdstrat
                                                                         Case BJCAGlobalsClass.Strat.R
                                                                             tdstrat = BJCAGlobalsClass.Strat.H
@@ -7471,7 +7471,7 @@ Imports BJ_CA.BJCAShared
                                                                                 tdstrat = BJCAGlobalsClass.Strat.S
                                                                         End Select
                                                                     End If
-                                                                    If Not Forced.HandEVs(index).RPostallowed(upcard) Then
+                                                                    If Forced.HandEVs(index).RPostallowed(upcard) = BJCAGlobalsClass.Surr.NS Then
                                                                         Select Case tdstrat
                                                                             Case BJCAGlobalsClass.Strat.R
                                                                                 tdstrat = BJCAGlobalsClass.Strat.H
@@ -7497,7 +7497,7 @@ Imports BJ_CA.BJCAShared
                                                                         newException.Index = index
                                                                         newException.Upcard = upcard
                                                                         newException.Paircard = paircard
-                                                                        newException.ExceptionType = BJCAGlobalsClass.ExType.CDTDPost
+                                                                        newException.ExceptionType = BJCAGlobalsClass.ExType.CDForcedPost
                                                                         newException.SplitHand = hands
                                                                         newException.ShoeState = CStr(paircard) + "  " + NPxHands(hands).Name
                                                                         newException.ExceptionName = BJCAShared.GetHandString(PlayerHands(index).Hand) + " v " + CStr(upcard) + " " + C.StratShortText(strat2) + " Post-Split " + CStr(paircard) + "  " + NPxHands(hands).Name
@@ -8658,7 +8658,7 @@ Imports BJ_CA.BJCAShared
                                                     tdstrat = BJCAGlobalsClass.Strat.S
                                             End Select
                                         End If
-                                        If Not TD.HandEVs(index).RPreallowed(upcard) Then
+                                        If TD.HandEVs(index).RPreallowed(upcard) = BJCAGlobalsClass.Surr.NS Then
                                             Select Case tdstrat
                                                 Case BJCAGlobalsClass.Strat.R
                                                     tdstrat = BJCAGlobalsClass.Strat.H
@@ -8754,7 +8754,7 @@ Imports BJ_CA.BJCAShared
                                                                             tdstrat = BJCAGlobalsClass.Strat.S
                                                                     End Select
                                                                 End If
-                                                                If Not TD.HandEVs(index).RPostallowed(upcard) Then
+                                                                If TD.HandEVs(index).RPostallowed(upcard) = BJCAGlobalsClass.Surr.NS Then
                                                                     Select Case tdstrat
                                                                         Case BJCAGlobalsClass.Strat.R
                                                                             tdstrat = BJCAGlobalsClass.Strat.H
@@ -9376,7 +9376,7 @@ Imports BJ_CA.BJCAShared
                 newEVs.Hand.Strat(upcard) = Opt.HandEVs(index).EVs.Strat(upcard)
         End Select
 
-        If paircard = 1 And postsplit And (Not newEVs.Hand.StratEV(upcard) = C.Strat.P Or Not SMA) Then
+        If paircard = 1 And postsplit And (newEVs.Hand.Strat(upcard) <> C.Strat.P Or Not SMA) Then
             tempEVs = ComputePostSplitAcesStratRT(index, upcard)
             newEVs.Hand.DEV(upcard) = tempEVs.DEV(upcard)
             newEVs.Hand.SurrEV(upcard) = tempEVs.SurrEV(upcard)
@@ -9809,9 +9809,9 @@ Imports BJ_CA.BJCAShared
                             With forcedTableRule
                                 .Upcard = upcard
                                 Select Case upcard
-                                    Case 0
+                                    Case 1
                                         UCStr = "A"
-                                    Case 9
+                                    Case 10
                                         UCStr = "T"
                                     Case Else
                                         UCStr = CStr(upcard)
@@ -9888,9 +9888,9 @@ Imports BJ_CA.BJCAShared
                                 With forcedTableRule
                                     .Upcard = upcard
                                     Select Case upcard
-                                        Case 0
+                                        Case 1
                                             UCStr = "A"
-                                        Case 9
+                                        Case 10
                                             UCStr = "T"
                                         Case Else
                                             UCStr = CStr(upcard)
@@ -9943,9 +9943,9 @@ Imports BJ_CA.BJCAShared
                             With forcedTableRule
                                 .Upcard = upcard
                                 Select Case upcard
-                                    Case 0
+                                    Case 1
                                         UCStr = "A"
-                                    Case 9
+                                    Case 10
                                         UCStr = "T"
                                     Case Else
                                         UCStr = CStr(upcard)
@@ -10022,9 +10022,9 @@ Imports BJ_CA.BJCAShared
                                 With forcedTableRule
                                     .Upcard = upcard
                                     Select Case upcard
-                                        Case 0
+                                        Case 1
                                             UCStr = "A"
-                                        Case 9
+                                        Case 10
                                             UCStr = "T"
                                         Case Else
                                             UCStr = CStr(upcard)
@@ -10077,9 +10077,9 @@ Imports BJ_CA.BJCAShared
                             With forcedTableRule
                                 .Upcard = upcard
                                 Select Case upcard
-                                    Case 0
+                                    Case 1
                                         UCStr = "A"
-                                    Case 9
+                                    Case 10
                                         UCStr = "T"
                                     Case Else
                                         UCStr = CStr(upcard)
@@ -10156,9 +10156,9 @@ Imports BJ_CA.BJCAShared
                                 With forcedTableRule
                                     .Upcard = upcard
                                     Select Case upcard
-                                        Case 0
+                                        Case 1
                                             UCStr = "A"
-                                        Case 9
+                                        Case 10
                                             UCStr = "T"
                                         Case Else
                                             UCStr = CStr(upcard)
