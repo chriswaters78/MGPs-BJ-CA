@@ -3325,7 +3325,9 @@ Imports BJ_CA.BJCAShared
                                         End If
                                     Else
                                         'Break up hitting into suited hit and non-suited hit
-                                        probsuit = CurrentShoe.Suits(card, suit) / CurrentShoe.Cards(card)
+                                        'The upcard was dealt without a suit, so it takes its share of every suit: a card of
+                                        '   its rank is of this suit with chance Suits / (Cards + 1), not Suits / Cards.
+                                        probsuit = CurrentShoe.Suits(card, suit) / (CurrentShoe.Cards(card) + If(card = upcard, 1, 0))
                                         'SuitedStratEV includes the SuitedBonusEV so it doesn't need to be added here
                                         PlayerHands(index).SuitedBonusEVs.SuitedHitEV(upcard, suit) += prob * (1 - probsuit) * (cstrat.HandEVs(PlayerHands(index).HitHand(card)).EVs.StratEV(upcard) + PlayerHands(PlayerHands(index).HitHand(card)).HandEVs.BonusEV(upcard))
                                         PlayerHands(index).SuitedBonusEVs.SuitedHitEV(upcard, suit) += prob * probsuit * PlayerHands(PlayerHands(index).HitHand(card)).SuitedBonusEVs.SuitedStratEV(upcard, suit)
